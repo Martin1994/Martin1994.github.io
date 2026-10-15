@@ -3,7 +3,7 @@ function isRecord(value) {
   return typeof value === "object" && value !== null;
 }
 function assertBrowserExports(value) {
-  const methods = ["LayoutTick", "OnClick", "OnScroll", "RunScheduled", "Shutdown"];
+  const methods = ["LayoutTick", "OnClick", "OnScroll", "RunScheduled", "OnSystemThemeChanged", "Shutdown"];
   if (!isRecord(value) || !methods.every((name) => {
     return typeof value[name] === "function";
   })) {
@@ -21,268 +21,6 @@ function resolveBrowserExports(assembly) {
   assertBrowserExports(value);
   return value;
 }
-
-// src/Wasm.FluentUIWebComponents/web/bridge.ts
-function isButton(element) {
-  return element.localName === "fluent-button";
-}
-function createBridge(viewport, getApi, onError) {
-  const elements = /* @__PURE__ */ new Map();
-  const clicks = /* @__PURE__ */ new Map();
-  const scrolls = /* @__PURE__ */ new Map();
-  const timers = /* @__PURE__ */ new Map();
-  const kinds = /* @__PURE__ */ new Set(["window", "page", "layout", "label", "button", "content", "border", "scroll"]);
-  let sequence = 0;
-  let observer;
-  let mountedId = 0;
-  let frameId = 0;
-  let stopped = false;
-  const get = (id3) => {
-    if (!Number.isInteger(id3) || id3 <= 0 || id3 > 2147483647) {
-      throw new Error(`Invalid MAUI element handle: ${id3}`);
-    }
-    const element = elements.get(id3);
-    if (!element) {
-      throw new Error(`Stale MAUI element handle: ${id3}`);
-    }
-    return element;
-  };
-  const invoke = (action) => {
-    try {
-      action();
-    } catch (error) {
-      onError(error instanceof Error ? error.message : String(error));
-    }
-  };
-  const requestLayout = () => {
-    if (stopped || !mountedId || frameId) {
-      return;
-    }
-    frameId = requestAnimationFrame(() => {
-      frameId = 0;
-      if (stopped || !mountedId) {
-        return;
-      }
-      invoke(() => {
-        return getApi().LayoutTick(viewport.clientWidth, viewport.clientHeight);
-      });
-    });
-  };
-  const unmount = (id3) => {
-    if (mountedId !== id3 || !mountedId) {
-      return;
-    }
-    observer?.disconnect();
-    observer = void 0;
-    cancelAnimationFrame(frameId);
-    frameId = 0;
-    mountedId = 0;
-    get(id3).remove();
-  };
-  const unsubscribeClick = (id3) => {
-    const element = get(id3);
-    const callback = clicks.get(id3);
-    if (callback) {
-      element.removeEventListener("click", callback);
-    }
-    clicks.delete(id3);
-  };
-  const stop = () => {
-    stopped = true;
-    if (mountedId) {
-      unmount(mountedId);
-    }
-    for (const timer of timers.values()) {
-      clearTimeout(timer);
-    }
-    timers.clear();
-  };
-  const imports = {
-    report(message) {
-      onError(message);
-    },
-    create(kind) {
-      if (stopped) {
-        throw new Error("MAUI bridge is stopped");
-      }
-      if (!kinds.has(kind)) {
-        throw new Error(`Unsupported element: ${kind}`);
-      }
-      if (sequence >= 2147483647) {
-        throw new Error("MAUI element handle limit reached");
-      }
-      const element = document.createElement(kind === "button" ? "fluent-button" : kind === "label" ? "span" : "div");
-      const id3 = ++sequence;
-      element.dataset.kind = kind;
-      element.style.position = "absolute";
-      element.style.boxSizing = "border-box";
-      if (kind === "label") {
-        element.style.whiteSpace = "pre-wrap";
-        element.style.overflowWrap = "break-word";
-        element.style.lineHeight = "1.3";
-      }
-      if (kind === "scroll") {
-        element.style.overflowY = "auto";
-        element.style.overflowX = "hidden";
-      }
-      elements.set(id3, element);
-      return id3;
-    },
-    style(id3, name, value) {
-      get(id3).style.setProperty(name, value);
-    },
-    text(id3, value) {
-      get(id3).textContent = value;
-    },
-    enabled(id3, value) {
-      const element = get(id3);
-      if (isButton(element)) {
-        element.disabled = !value;
-      }
-    },
-    automationId(id3, value) {
-      get(id3).dataset.automationId = value;
-    },
-    frame(id3, x, y, width, height) {
-      if (![x, y, width, height].every(Number.isFinite)) {
-        throw new Error("Non-finite MAUI frame");
-      }
-      Object.assign(get(id3).style, { left: `${x}px`, top: `${y}px`, width: `${width}px`, height: `${height}px` });
-    },
-    measure(id3, width, height, returnHeight) {
-      const element = get(id3);
-      const saved = element.style.cssText;
-      try {
-        Object.assign(element.style, {
-          width: "max-content",
-          height: "auto",
-          maxWidth: Number.isFinite(width) ? `${Math.max(0, width)}px` : "none",
-          maxHeight: "none"
-        });
-        const bounds = element.getBoundingClientRect();
-        return returnHeight ? bounds.height : bounds.width;
-      } finally {
-        element.style.cssText = saved;
-      }
-    },
-    insert(parent, child, index) {
-      const container = get(parent);
-      const element = get(child);
-      element.remove();
-      container.insertBefore(element, container.children[index] ?? null);
-    },
-    remove(id3) {
-      get(id3).remove();
-    },
-    release(id3) {
-      const element = get(id3);
-      unmount(id3);
-      unsubscribeClick(id3);
-      const onScroll = scrolls.get(id3);
-      if (onScroll) {
-        element.removeEventListener("scroll", onScroll);
-      }
-      scrolls.delete(id3);
-      elements.delete(id3);
-      element.remove();
-    },
-    mount(id3) {
-      if (stopped) {
-        throw new Error("MAUI bridge is stopped");
-      }
-      if (mountedId) {
-        throw new Error("MAUI bridge supports one mounted window");
-      }
-      viewport.append(get(id3));
-      mountedId = id3;
-      observer = new ResizeObserver(requestLayout);
-      observer.observe(viewport);
-      requestLayout();
-    },
-    unmount,
-    subscribeClick(id3) {
-      if (stopped) {
-        throw new Error("MAUI bridge is stopped");
-      }
-      if (clicks.has(id3)) {
-        throw new Error("Duplicate MAUI button subscription");
-      }
-      const element = get(id3);
-      const callback = () => {
-        if (stopped || !elements.has(id3)) {
-          return;
-        }
-        invoke(() => {
-          return getApi().OnClick(id3);
-        });
-      };
-      clicks.set(id3, callback);
-      element.addEventListener("click", callback);
-    },
-    unsubscribeClick,
-    subscribeScroll(id3) {
-      if (stopped) {
-        throw new Error("MAUI bridge is stopped");
-      }
-      if (scrolls.has(id3)) {
-        throw new Error("Duplicate scroll subscription");
-      }
-      const element = get(id3);
-      const callback = () => {
-        if (stopped || !elements.has(id3)) {
-          return;
-        }
-        invoke(() => {
-          return getApi().OnScroll(id3, element.scrollLeft, element.scrollTop);
-        });
-      };
-      scrolls.set(id3, callback);
-      element.addEventListener("scroll", callback, { passive: true });
-    },
-    requestLayout,
-    schedule(id3, milliseconds) {
-      if (stopped) {
-        return;
-      }
-      clearTimeout(timers.get(id3));
-      timers.set(id3, setTimeout(() => {
-        timers.delete(id3);
-        if (!stopped) {
-          invoke(() => {
-            return getApi().RunScheduled(id3);
-          });
-        }
-      }, milliseconds));
-    },
-    cancelSchedule(id3) {
-      clearTimeout(timers.get(id3));
-      timers.delete(id3);
-    },
-    stop
-  };
-  const dispose = () => {
-    stop();
-    for (const id3 of elements.keys()) {
-      imports.release(id3);
-    }
-  };
-  return { imports, dispose };
-}
-
-// node_modules/@fluentui/web-components/dist/esm/fluent-design-system.js
-var FluentDesignSystem = Object.freeze({
-  prefix: "fluent",
-  shadowRootMode: "open",
-  registry: globalThis.customElements
-});
-
-// node_modules/@fluentui/web-components/dist/esm/button/button.options.js
-var ButtonType = {
-  submit: "submit",
-  reset: "reset",
-  button: "button"
-};
-var tagName = `${FluentDesignSystem.prefix}-button`;
 
 // node_modules/@microsoft/fast-element/dist/esm/binding/binding.js
 var Binding = class {
@@ -1144,8 +882,8 @@ function attr(configOrTarget, prop) {
 
 // node_modules/@microsoft/fast-element/dist/esm/styles/element-styles.js
 var DefaultStyleStrategy;
-function reduceStyles(styles2) {
-  return styles2.reduce((reduced, current) => {
+function reduceStyles(styles4) {
+  return styles4.reduce((reduced, current) => {
     if (current instanceof ElementStyles) {
       reduced.push(...reduceStyles(current.styles));
     } else {
@@ -1171,8 +909,8 @@ var ElementStyles = class _ElementStyles {
    * Creates an instance of ElementStyles.
    * @param styles - The styles that will be associated with elements.
    */
-  constructor(styles2) {
-    this.styles = styles2;
+  constructor(styles4) {
+    this.styles = styles4;
     this.targets = /* @__PURE__ */ new WeakSet();
     this._strategy = null;
   }
@@ -1210,16 +948,16 @@ var ElementStyles = class _ElementStyles {
    * @param styles - The style options to normalize.
    * @returns A singular ElementStyles instance or undefined.
    */
-  static normalize(styles2) {
-    return styles2 === void 0 ? void 0 : Array.isArray(styles2) ? new _ElementStyles(styles2) : styles2 instanceof _ElementStyles ? styles2 : new _ElementStyles([styles2]);
+  static normalize(styles4) {
+    return styles4 === void 0 ? void 0 : Array.isArray(styles4) ? new _ElementStyles(styles4) : styles4 instanceof _ElementStyles ? styles4 : new _ElementStyles([styles4]);
   }
 };
 ElementStyles.supportsAdoptedStyleSheets = Array.isArray(document.adoptedStyleSheets) && "replace" in CSSStyleSheet.prototype;
 function createAdoptedSheetsStrategy() {
   const cache = /* @__PURE__ */ new Map();
   return class FallbackAdoptedSheetsStrategy {
-    constructor(styles2) {
-      this.sheets = styles2.map((x) => {
+    constructor(styles4) {
+      this.sheets = styles4.map((x) => {
         if (x instanceof CSSStyleSheet) {
           return x;
         }
@@ -1245,8 +983,8 @@ function createAdoptedSheetsStrategy() {
 var fallbackStyleId = 0;
 function createStyleElementStrategy() {
   return class FallbackStyleElementStrategy {
-    constructor(styles2) {
-      this.styles = styles2;
+    constructor(styles4) {
+      this.styles = styles4;
       this.styleClass = `fast-${++fallbackStyleId}`;
     }
     addStylesTo(target) {
@@ -1260,9 +998,9 @@ function createStyleElementStrategy() {
     }
     removeStylesFrom(target) {
       const t = target === document ? document.body : target;
-      const styles2 = t.querySelectorAll(`.${this.styleClass}`);
-      for (let i = 0, ii = styles2.length; i < ii; ++i) {
-        t.removeChild(styles2[i]);
+      const styles4 = t.querySelectorAll(`.${this.styleClass}`);
+      for (let i = 0, ii = styles4.length; i < ii; ++i) {
+        t.removeChild(styles4[i]);
       }
     }
   };
@@ -1802,34 +1540,34 @@ var ElementController = class _ElementController {
    * Adds styles to this element. Providing an HTMLStyleElement will attach the element instance to the shadowRoot.
    * @param styles - The styles to add.
    */
-  addStyles(styles2) {
+  addStyles(styles4) {
     var _a2;
-    if (!styles2) {
+    if (!styles4) {
       return;
     }
     const source = this.source;
-    if (styles2 instanceof HTMLElement) {
+    if (styles4 instanceof HTMLElement) {
       const target = (_a2 = getShadowRoot(source)) !== null && _a2 !== void 0 ? _a2 : this.source;
-      target.append(styles2);
-    } else if (!styles2.isAttachedTo(source)) {
-      styles2.addStylesTo(source);
+      target.append(styles4);
+    } else if (!styles4.isAttachedTo(source)) {
+      styles4.addStylesTo(source);
     }
   }
   /**
    * Removes styles from this element. Providing an HTMLStyleElement will detach the element instance from the shadowRoot.
    * @param styles - the styles to remove.
    */
-  removeStyles(styles2) {
+  removeStyles(styles4) {
     var _a2;
-    if (!styles2) {
+    if (!styles4) {
       return;
     }
     const source = this.source;
-    if (styles2 instanceof HTMLElement) {
+    if (styles4 instanceof HTMLElement) {
       const target = (_a2 = getShadowRoot(source)) !== null && _a2 !== void 0 ? _a2 : source;
-      target.removeChild(styles2);
-    } else if (styles2.isAttachedTo(source)) {
-      styles2.removeStylesFrom(source);
+      target.removeChild(styles4);
+    } else if (styles4.isAttachedTo(source)) {
+      styles4.removeStylesFrom(source);
     }
   }
   /**
@@ -2139,9 +1877,9 @@ function normalizeStyleTarget(target) {
   }
 }
 var AdoptedStyleSheetsStrategy = class _AdoptedStyleSheetsStrategy {
-  constructor(styles2) {
+  constructor(styles4) {
     const styleSheetCache = _AdoptedStyleSheetsStrategy.styleSheetCache;
-    this.sheets = styles2.map((x) => {
+    this.sheets = styles4.map((x) => {
       if (x instanceof CSSStyleSheet) {
         return x;
       }
@@ -2168,26 +1906,26 @@ function usableStyleTarget(target) {
   return target === document ? document.body : target;
 }
 var StyleElementStrategy = class {
-  constructor(styles2) {
-    this.styles = styles2;
+  constructor(styles4) {
+    this.styles = styles4;
     this.styleClass = nextStyleId();
   }
   addStylesTo(target) {
     target = usableStyleTarget(normalizeStyleTarget(target));
-    const styles2 = this.styles;
+    const styles4 = this.styles;
     const styleClass = this.styleClass;
-    for (let i = 0; i < styles2.length; i++) {
+    for (let i = 0; i < styles4.length; i++) {
       const element = document.createElement("style");
-      element.innerHTML = styles2[i];
+      element.innerHTML = styles4[i];
       element.className = styleClass;
       target.append(element);
     }
   }
   removeStylesFrom(target) {
     target = usableStyleTarget(normalizeStyleTarget(target));
-    const styles2 = target.querySelectorAll(`.${this.styleClass}`);
-    for (let i = 0, ii = styles2.length; i < ii; ++i) {
-      target.removeChild(styles2[i]);
+    const styles4 = target.querySelectorAll(`.${this.styleClass}`);
+    for (let i = 0, ii = styles4.length; i < ii; ++i) {
+      target.removeChild(styles4[i]);
     }
   }
 };
@@ -2304,7 +2042,7 @@ var CSSDirective = Object.freeze({
 
 // node_modules/@microsoft/fast-element/dist/esm/styles/css.js
 function collectStyles(strings, values) {
-  const styles2 = [];
+  const styles4 = [];
   let cssString = "";
   for (let i = 0, ii = strings.length - 1; i < ii; ++i) {
     cssString += strings[i];
@@ -2314,26 +2052,26 @@ function collectStyles(strings, values) {
     }
     if (value instanceof ElementStyles || value instanceof CSSStyleSheet) {
       if (cssString.trim() !== "") {
-        styles2.push(cssString);
+        styles4.push(cssString);
         cssString = "";
       }
-      styles2.push(value);
+      styles4.push(value);
     } else {
       cssString += value;
     }
   }
   cssString += strings[strings.length - 1];
   if (cssString.trim() !== "") {
-    styles2.push(cssString);
+    styles4.push(cssString);
   }
-  return styles2;
+  return styles4;
 }
 var css = ((strings, ...values) => {
   return new ElementStyles(collectStyles(strings, values));
 });
 var CSSPartial = class {
-  constructor(styles2) {
-    this.value = styles2.length === 0 ? "" : styles2.length === 1 ? styles2[0] : new ElementStyles(styles2);
+  constructor(styles4) {
+    this.value = styles4.length === 0 ? "" : styles4.length === 1 ? styles4[0] : new ElementStyles(styles4);
   }
   createCSS() {
     return this.value;
@@ -4059,710 +3797,6 @@ function slotted(propertyOrOptions) {
   return new SlottedDirective(propertyOrOptions);
 }
 
-// node_modules/@fluentui/web-components/dist/esm/utils/display.js
-var hidden = `:host([hidden]){display:none}`;
-function display(displayValue) {
-  return `${hidden}:host{display:${displayValue}}`;
-}
-
-// node_modules/@fluentui/web-components/dist/esm/theme/design-tokens.js
-var colorNeutralForeground1 = "var(--colorNeutralForeground1)";
-var colorNeutralForeground1Hover = "var(--colorNeutralForeground1Hover)";
-var colorNeutralForeground1Pressed = "var(--colorNeutralForeground1Pressed)";
-var colorNeutralForeground2 = "var(--colorNeutralForeground2)";
-var colorNeutralForeground2Hover = "var(--colorNeutralForeground2Hover)";
-var colorNeutralForeground2Pressed = "var(--colorNeutralForeground2Pressed)";
-var colorNeutralForeground2BrandHover = "var(--colorNeutralForeground2BrandHover)";
-var colorNeutralForeground2BrandPressed = "var(--colorNeutralForeground2BrandPressed)";
-var colorNeutralForegroundDisabled = "var(--colorNeutralForegroundDisabled)";
-var colorNeutralForegroundOnBrand = "var(--colorNeutralForegroundOnBrand)";
-var colorNeutralBackground1 = "var(--colorNeutralBackground1)";
-var colorNeutralBackground1Hover = "var(--colorNeutralBackground1Hover)";
-var colorNeutralBackground1Pressed = "var(--colorNeutralBackground1Pressed)";
-var colorSubtleBackground = "var(--colorSubtleBackground)";
-var colorSubtleBackgroundHover = "var(--colorSubtleBackgroundHover)";
-var colorSubtleBackgroundPressed = "var(--colorSubtleBackgroundPressed)";
-var colorTransparentBackground = "var(--colorTransparentBackground)";
-var colorTransparentBackgroundHover = "var(--colorTransparentBackgroundHover)";
-var colorTransparentBackgroundPressed = "var(--colorTransparentBackgroundPressed)";
-var colorNeutralBackgroundDisabled = "var(--colorNeutralBackgroundDisabled)";
-var colorBrandBackground = "var(--colorBrandBackground)";
-var colorBrandBackgroundHover = "var(--colorBrandBackgroundHover)";
-var colorBrandBackgroundPressed = "var(--colorBrandBackgroundPressed)";
-var colorNeutralStroke1 = "var(--colorNeutralStroke1)";
-var colorNeutralStroke1Hover = "var(--colorNeutralStroke1Hover)";
-var colorNeutralStroke1Pressed = "var(--colorNeutralStroke1Pressed)";
-var colorNeutralStrokeDisabled = "var(--colorNeutralStrokeDisabled)";
-var colorTransparentStroke = "var(--colorTransparentStroke)";
-var colorStrokeFocus2 = "var(--colorStrokeFocus2)";
-var borderRadiusNone = "var(--borderRadiusNone)";
-var borderRadiusSmall = "var(--borderRadiusSmall)";
-var borderRadiusMedium = "var(--borderRadiusMedium)";
-var borderRadiusLarge = "var(--borderRadiusLarge)";
-var borderRadiusCircular = "var(--borderRadiusCircular)";
-var fontFamilyBase = "var(--fontFamilyBase)";
-var fontSizeBase200 = "var(--fontSizeBase200)";
-var fontSizeBase300 = "var(--fontSizeBase300)";
-var fontSizeBase400 = "var(--fontSizeBase400)";
-var fontWeightRegular = "var(--fontWeightRegular)";
-var fontWeightSemibold = "var(--fontWeightSemibold)";
-var lineHeightBase200 = "var(--lineHeightBase200)";
-var lineHeightBase300 = "var(--lineHeightBase300)";
-var lineHeightBase400 = "var(--lineHeightBase400)";
-var shadow2 = "var(--shadow2)";
-var shadow4 = "var(--shadow4)";
-var strokeWidthThin = "var(--strokeWidthThin)";
-var strokeWidthThick = "var(--strokeWidthThick)";
-var spacingHorizontalXS = "var(--spacingHorizontalXS)";
-var spacingHorizontalSNudge = "var(--spacingHorizontalSNudge)";
-var spacingHorizontalS = "var(--spacingHorizontalS)";
-var spacingHorizontalM = "var(--spacingHorizontalM)";
-var spacingHorizontalL = "var(--spacingHorizontalL)";
-var durationFaster = "var(--durationFaster)";
-var curveEasyEase = "var(--curveEasyEase)";
-
-// node_modules/@fluentui/web-components/dist/esm/button/button.styles.js
-var baseButtonStyles = css`
-  ${display("inline-flex")}
-
-  :host {
-    --icon-spacing: ${spacingHorizontalSNudge};
-    position: relative;
-    contain: layout style;
-    vertical-align: middle;
-    align-items: center;
-    box-sizing: border-box;
-    justify-content: center;
-    text-align: center;
-    text-decoration-line: none;
-    margin: 0;
-    min-height: 32px;
-    outline-style: none;
-    background-color: ${colorNeutralBackground1};
-    color: ${colorNeutralForeground1};
-    border: ${strokeWidthThin} solid ${colorNeutralStroke1};
-    padding: 0 ${spacingHorizontalM};
-    min-width: 96px;
-    border-radius: ${borderRadiusMedium};
-    font-size: ${fontSizeBase300};
-    font-family: ${fontFamilyBase};
-    font-weight: ${fontWeightSemibold};
-    line-height: ${lineHeightBase300};
-    transition-duration: ${durationFaster};
-    transition-property: background, border, color;
-    transition-timing-function: ${curveEasyEase};
-    cursor: pointer;
-    user-select: none;
-  }
-
-  .content {
-    display: inherit;
-  }
-
-  :host(:hover) {
-    background-color: ${colorNeutralBackground1Hover};
-    color: ${colorNeutralForeground1Hover};
-    border-color: ${colorNeutralStroke1Hover};
-  }
-
-  :host(:hover:active) {
-    background-color: ${colorNeutralBackground1Pressed};
-    border-color: ${colorNeutralStroke1Pressed};
-    color: ${colorNeutralForeground1Pressed};
-    outline-style: none;
-  }
-
-  :host(:focus-visible) {
-    border-color: ${colorTransparentStroke};
-    outline: ${strokeWidthThick} solid ${colorTransparentStroke};
-    box-shadow: ${shadow4}, 0 0 0 2px ${colorStrokeFocus2};
-  }
-
-  @media screen and (prefers-reduced-motion: reduce) {
-    :host {
-      transition-duration: 0.01ms;
-    }
-  }
-
-  ::slotted(svg) {
-    font-size: 20px;
-    height: 20px;
-    width: 20px;
-    fill: currentColor;
-  }
-
-  ::slotted([slot='start']) {
-    margin-inline-end: var(--icon-spacing);
-  }
-
-  ::slotted([slot='end']),
-  [slot='end'] {
-    flex-shrink: 0;
-    margin-inline-start: var(--icon-spacing);
-  }
-
-  :host([icon-only]) {
-    min-width: 32px;
-    max-width: 32px;
-  }
-
-  :host([size='small']) {
-    --icon-spacing: ${spacingHorizontalXS};
-    min-height: 24px;
-    min-width: 64px;
-    padding: 0 ${spacingHorizontalS};
-    border-radius: ${borderRadiusSmall};
-    font-size: ${fontSizeBase200};
-    line-height: ${lineHeightBase200};
-    font-weight: ${fontWeightRegular};
-  }
-
-  :host([size='small'][icon-only]) {
-    min-width: 24px;
-    max-width: 24px;
-  }
-
-  :host([size='large']) {
-    min-height: 40px;
-    border-radius: ${borderRadiusLarge};
-    padding: 0 ${spacingHorizontalL};
-    font-size: ${fontSizeBase400};
-    line-height: ${lineHeightBase400};
-  }
-
-  :host([size='large'][icon-only]) {
-    min-width: 40px;
-    max-width: 40px;
-  }
-
-  :host([size='large']) ::slotted(svg) {
-    font-size: 24px;
-    height: 24px;
-    width: 24px;
-  }
-
-  :host(:is([shape='circular'], [shape='circular']:focus-visible)) {
-    border-radius: ${borderRadiusCircular};
-  }
-
-  :host(:is([shape='square'], [shape='square']:focus-visible)) {
-    border-radius: ${borderRadiusNone};
-  }
-
-  :host([appearance='primary']) {
-    background-color: ${colorBrandBackground};
-    color: ${colorNeutralForegroundOnBrand};
-    border-color: transparent;
-  }
-
-  :host([appearance='primary']:hover) {
-    background-color: ${colorBrandBackgroundHover};
-  }
-
-  :host([appearance='primary']:is(:hover, :hover:active):not(:focus-visible)) {
-    border-color: transparent;
-  }
-
-  :host([appearance='primary']:is(:hover, :hover:active)) {
-    color: ${colorNeutralForegroundOnBrand};
-  }
-
-  :host([appearance='primary']:hover:active) {
-    background-color: ${colorBrandBackgroundPressed};
-  }
-
-  :host([appearance='primary']:focus-visible) {
-    border-color: ${colorNeutralForegroundOnBrand};
-    box-shadow: ${shadow2}, 0 0 0 2px ${colorStrokeFocus2};
-  }
-
-  :host([appearance='outline']) {
-    background-color: ${colorTransparentBackground};
-  }
-
-  :host([appearance='outline']:hover) {
-    background-color: ${colorTransparentBackgroundHover};
-  }
-
-  :host([appearance='outline']:hover:active) {
-    background-color: ${colorTransparentBackgroundPressed};
-  }
-
-  :host([appearance='subtle']) {
-    background-color: ${colorSubtleBackground};
-    color: ${colorNeutralForeground2};
-    border-color: transparent;
-  }
-
-  :host([appearance='subtle']:hover) {
-    background-color: ${colorSubtleBackgroundHover};
-    color: ${colorNeutralForeground2Hover};
-    border-color: transparent;
-  }
-
-  :host([appearance='subtle']:hover:active) {
-    background-color: ${colorSubtleBackgroundPressed};
-    color: ${colorNeutralForeground2Pressed};
-    border-color: transparent;
-  }
-
-  :host([appearance='subtle']:hover) ::slotted(svg) {
-    fill: ${colorNeutralForeground2BrandHover};
-  }
-
-  :host([appearance='subtle']:hover:active) ::slotted(svg) {
-    fill: ${colorNeutralForeground2BrandPressed};
-  }
-
-  :host([appearance='transparent']) {
-    background-color: ${colorTransparentBackground};
-    color: ${colorNeutralForeground2};
-  }
-
-  :host([appearance='transparent']:hover) {
-    background-color: ${colorTransparentBackgroundHover};
-    color: ${colorNeutralForeground2BrandHover};
-  }
-
-  :host([appearance='transparent']:hover:active) {
-    background-color: ${colorTransparentBackgroundPressed};
-    color: ${colorNeutralForeground2BrandPressed};
-  }
-
-  :host(:is([appearance='transparent'], [appearance='transparent']:is(:hover, :active))) {
-    border-color: transparent;
-  }
-`;
-var styles = css`
-  ${baseButtonStyles}
-
-  :host(:is(:disabled, [disabled], [disabled-focusable], [appearance]:disabled, [appearance][disabled], [appearance][disabled-focusable])),
-  :host(:is(:disabled, [disabled], [disabled-focusable], [appearance]:disabled, [appearance][disabled], [appearance][disabled-focusable]):hover),
-  :host(:is(:disabled, [disabled], [disabled-focusable], [appearance]:disabled, [appearance][disabled], [appearance][disabled-focusable]):hover:active) {
-    background-color: ${colorNeutralBackgroundDisabled};
-    border-color: ${colorNeutralStrokeDisabled};
-    color: ${colorNeutralForegroundDisabled};
-    cursor: not-allowed;
-  }
-
-  :host([appearance='primary']:is(:disabled, [disabled], [disabled-focusable])),
-  :host([appearance='primary']:is(:disabled, [disabled], [disabled-focusable]):is(:hover, :hover:active)) {
-    border-color: transparent;
-  }
-
-  :host([appearance='outline']:is(:disabled, [disabled], [disabled-focusable])),
-  :host([appearance='outline']:is(:disabled, [disabled], [disabled-focusable]):is(:hover, :hover:active)) {
-    background-color: ${colorTransparentBackground};
-  }
-
-  :host([appearance='subtle']:is(:disabled, [disabled], [disabled-focusable])),
-  :host([appearance='subtle']:is(:disabled, [disabled], [disabled-focusable]):is(:hover, :hover:active)) {
-    background-color: ${colorTransparentBackground};
-    border-color: transparent;
-  }
-
-  :host([appearance='transparent']:is(:disabled, [disabled], [disabled-focusable])),
-  :host([appearance='transparent']:is(:disabled, [disabled], [disabled-focusable]):is(:hover, :hover:active)) {
-    border-color: transparent;
-    background-color: ${colorTransparentBackground};
-  }
-
-  @media (forced-colors: active) {
-    :host {
-      background-color: ButtonFace;
-      color: ButtonText;
-    }
-
-    :host(:is(:hover, :focus-visible)) {
-      border-color: Highlight !important;
-    }
-
-    :host([appearance='primary']:not(:is(:hover, :focus-visible))) {
-      background-color: Highlight;
-      color: HighlightText;
-      forced-color-adjust: none;
-    }
-
-    :host(
-        :is(
-            :disabled,
-            [disabled],
-            [disabled-focusable],
-            [appearance]:disabled,
-            [appearance][disabled],
-            [appearance][disabled-focusable]
-          )
-      ) {
-      background-color: ButtonFace;
-      color: GrayText;
-      border-color: ButtonText;
-    }
-  }
-`;
-
-// node_modules/@fluentui/web-components/dist/esm/utils/template-helpers.js
-function staticallyCompose(item) {
-  if (!item) {
-    return InlineTemplateDirective.empty;
-  }
-  if (typeof item === "string") {
-    return new InlineTemplateDirective(item);
-  }
-  if ("inline" in item) {
-    return item.inline();
-  }
-  return item;
-}
-
-// node_modules/@fluentui/web-components/dist/esm/patterns/start-end.js
-var StartEnd = class {
-};
-function endSlotTemplate(options) {
-  return html` <slot name="end" ${ref("end")}>${staticallyCompose(options.end)}</slot> `.inline();
-}
-function startSlotTemplate(options) {
-  return html` <slot name="start" ${ref("start")}>${staticallyCompose(options.start)}</slot> `.inline();
-}
-
-// node_modules/@fluentui/web-components/dist/esm/button/button.template.js
-function buttonTemplate(options = {}) {
-  return html`
-    <template
-      @click="${(x, c) => x.clickHandler(c.event)}"
-      @keypress="${(x, c) => x.keypressHandler(c.event)}"
-    >
-      ${startSlotTemplate(options)}
-      <span class="content" part="content">
-        <slot ${slotted("defaultSlottedContent")}></slot>
-      </span>
-      ${endSlotTemplate(options)}
-    </template>
-  `;
-}
-var template = buttonTemplate();
-
-// node_modules/@fluentui/web-components/dist/esm/button/button.definition.js
-var definition = {
-  name: tagName,
-  registry: FluentDesignSystem.registry,
-  styles,
-  template
-};
-
-// node_modules/tslib/tslib.es6.mjs
-function __decorate(decorators, target, key, desc) {
-  var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-  if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-  else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-  return c > 3 && r && Object.defineProperty(target, key, r), r;
-}
-
-// node_modules/@fluentui/web-components/dist/esm/utils/apply-mixins.js
-function applyMixins(derivedCtor, ...baseCtors) {
-  const derivedAttributes = AttributeConfiguration.locate(derivedCtor);
-  baseCtors.forEach((baseCtor) => {
-    Object.getOwnPropertyNames(baseCtor.prototype).forEach((name) => {
-      if (name !== "constructor") {
-        Object.defineProperty(
-          derivedCtor.prototype,
-          name,
-          /* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */
-          Object.getOwnPropertyDescriptor(baseCtor.prototype, name)
-        );
-      }
-    });
-    const baseAttributes = AttributeConfiguration.locate(baseCtor);
-    baseAttributes.forEach((x) => derivedAttributes.push(x));
-  });
-}
-
-// node_modules/@fluentui/web-components/dist/esm/utils/autofocus.js
-function maybeSetAutoFocus(element) {
-  const doc = element.ownerDocument;
-  if (element?.isConnected && element?.hasAttribute("autofocus") && // Note: opacity=0 is considered visible based on the native `autofocus` implementation
-  element?.checkVisibility?.({ contentVisibilityAuto: true, visibilityProperty: true }) && [null, element, doc.body, doc.documentElement].includes(doc.activeElement)) {
-    Updates.enqueue(() => {
-      element.focus();
-    });
-  }
-}
-
-// node_modules/@fluentui/web-components/dist/esm/button/button.base.js
-var BaseButton = class extends FASTElement {
-  /**
-   * Handles changes to the disabled attribute. If the button is disabled, it
-   * should not be focusable.
-   *
-   * @param previous - the previous disabled value
-   * @param next - the new disabled value
-   * @internal
-   */
-  disabledChanged() {
-    this.setTabIndex();
-  }
-  /**
-   * Sets the element's internal disabled state when the element is focusable while disabled.
-   *
-   * @param previous - the previous disabledFocusable value
-   * @param next - the current disabledFocusable value
-   * @internal
-   */
-  disabledFocusableChanged(previous, next2) {
-    if (this.elementInternals) {
-      this.elementInternals.ariaDisabled = `${!!next2}`;
-    }
-  }
-  /**
-   * The associated form element.
-   *
-   * @public
-   */
-  get form() {
-    return this.elementInternals.form;
-  }
-  static {
-    this.formAssociated = true;
-  }
-  /**
-   * A reference to all associated label elements.
-   *
-   * @public
-   */
-  get labels() {
-    return Object.freeze(Array.from(this.elementInternals.labels));
-  }
-  /**
-   * Removes the form submission fallback control when the type changes.
-   *
-   * @param previous - the previous type value
-   * @param next - the new type value
-   * @internal
-   */
-  typeChanged(previous, next2) {
-    if (next2 !== ButtonType.submit) {
-      this.formSubmissionFallbackControl?.remove();
-      this.shadowRoot?.querySelector('slot[name="internal"]')?.remove();
-    }
-  }
-  /**
-   * Handles the button click event.
-   *
-   * @param e - The event object
-   * @internal
-   */
-  clickHandler(e) {
-    if (e && this.disabledFocusable) {
-      e.stopImmediatePropagation();
-      return;
-    }
-    this.press();
-    return true;
-  }
-  connectedCallback() {
-    super.connectedCallback();
-    this.elementInternals.ariaDisabled = `${!!this.disabledFocusable}`;
-    this.setTabIndex();
-    maybeSetAutoFocus(this);
-  }
-  constructor() {
-    super();
-    this.disabledFocusable = false;
-    this.elementInternals = this.attachInternals();
-    this.elementInternals.role = "button";
-  }
-  /**
-   * This fallback creates a new slot, then creates a submit button to mirror the custom element's
-   * properties. The submit button is then appended to the slot and the form is submitted.
-   *
-   * @internal
-   * @privateRemarks
-   * This is a workaround until {@link https://github.com/WICG/webcomponents/issues/814 | WICG/webcomponents/issues/814} is resolved.
-   */
-  createAndInsertFormSubmissionFallbackControl() {
-    const internalSlot = this.formSubmissionFallbackControlSlot ?? document.createElement("slot");
-    internalSlot.setAttribute("name", "internal");
-    this.shadowRoot?.appendChild(internalSlot);
-    this.formSubmissionFallbackControlSlot = internalSlot;
-    const fallbackControl = this.formSubmissionFallbackControl ?? document.createElement("button");
-    fallbackControl.style.display = "none";
-    fallbackControl.setAttribute("type", "submit");
-    fallbackControl.setAttribute("slot", "internal");
-    if (this.formNoValidate) {
-      fallbackControl.toggleAttribute("formnovalidate", true);
-    }
-    if (this.elementInternals.form?.id) {
-      fallbackControl.setAttribute("form", this.elementInternals.form.id);
-    }
-    if (this.name) {
-      fallbackControl.setAttribute("name", this.name);
-    }
-    if (this.value) {
-      fallbackControl.setAttribute("value", this.value);
-    }
-    if (this.formAction) {
-      fallbackControl.setAttribute("formaction", this.formAction ?? "");
-    }
-    if (this.formEnctype) {
-      fallbackControl.setAttribute("formenctype", this.formEnctype ?? "");
-    }
-    if (this.formMethod) {
-      fallbackControl.setAttribute("formmethod", this.formMethod ?? "");
-    }
-    if (this.formTarget) {
-      fallbackControl.setAttribute("formtarget", this.formTarget ?? "");
-    }
-    this.append(fallbackControl);
-    this.formSubmissionFallbackControl = fallbackControl;
-  }
-  /**
-   * Invoked when a connected component's form or fieldset has its disabled state changed.
-   *
-   * @param disabled - the disabled value of the form / fieldset
-   *
-   * @internal
-   */
-  formDisabledCallback(disabled) {
-    this.disabled = disabled;
-  }
-  /**
-   * Handles keypress events for the button.
-   *
-   * @param e - the keyboard event
-   * @returns - the return value of the click handler
-   * @public
-   */
-  keypressHandler(e) {
-    if (e && this.disabledFocusable) {
-      e.stopImmediatePropagation();
-      return;
-    }
-    if (e.key === "Enter" || e.key === " ") {
-      this.click();
-      return;
-    }
-    return true;
-  }
-  /**
-   * Presses the button.
-   *
-   * @public
-   */
-  press() {
-    switch (this.type) {
-      case ButtonType.reset: {
-        this.resetForm();
-        break;
-      }
-      case ButtonType.submit: {
-        this.submitForm();
-        break;
-      }
-    }
-  }
-  /**
-   * Resets the associated form.
-   *
-   * @public
-   */
-  resetForm() {
-    this.elementInternals.form?.reset();
-  }
-  /**
-   * Sets the `tabindex` attribute based on the disabled state of the button.
-   *
-   * @internal
-   */
-  setTabIndex() {
-    if (this.disabled) {
-      this.removeAttribute("tabindex");
-      return;
-    }
-    this.tabIndex = Number(this.getAttribute("tabindex") ?? 0) < 0 ? -1 : 0;
-  }
-  /**
-   * Submits the associated form.
-   *
-   * @internal
-   */
-  submitForm() {
-    if (!this.elementInternals.form || this.disabled || this.type !== ButtonType.submit) {
-      return;
-    }
-    if (!this.name && !this.formAction && !this.formEnctype && !this.formAttribute && !this.formMethod && !this.formNoValidate && !this.formTarget) {
-      this.elementInternals.form.requestSubmit();
-      return;
-    }
-    try {
-      this.elementInternals.setFormValue(this.value ?? "");
-      this.elementInternals.form.requestSubmit(this);
-    } catch (e) {
-      this.createAndInsertFormSubmissionFallbackControl();
-      this.elementInternals.setFormValue(null);
-      this.elementInternals.form.requestSubmit(this.formSubmissionFallbackControl);
-    }
-  }
-};
-__decorate([
-  observable
-], BaseButton.prototype, "defaultSlottedContent", void 0);
-__decorate([
-  attr({ mode: "boolean" })
-], BaseButton.prototype, "disabled", void 0);
-__decorate([
-  attr({ attribute: "disabled-focusable", mode: "boolean" })
-], BaseButton.prototype, "disabledFocusable", void 0);
-__decorate([
-  attr({ attribute: "formaction" })
-], BaseButton.prototype, "formAction", void 0);
-__decorate([
-  attr({ attribute: "form" })
-], BaseButton.prototype, "formAttribute", void 0);
-__decorate([
-  attr({ attribute: "formenctype" })
-], BaseButton.prototype, "formEnctype", void 0);
-__decorate([
-  attr({ attribute: "formmethod" })
-], BaseButton.prototype, "formMethod", void 0);
-__decorate([
-  attr({ attribute: "formnovalidate", mode: "boolean" })
-], BaseButton.prototype, "formNoValidate", void 0);
-__decorate([
-  attr({ attribute: "formtarget" })
-], BaseButton.prototype, "formTarget", void 0);
-__decorate([
-  attr
-], BaseButton.prototype, "name", void 0);
-__decorate([
-  attr
-], BaseButton.prototype, "type", void 0);
-__decorate([
-  attr
-], BaseButton.prototype, "value", void 0);
-
-// node_modules/@fluentui/web-components/dist/esm/button/button.js
-var Button = class extends BaseButton {
-  constructor() {
-    super(...arguments);
-    this.iconOnly = false;
-  }
-};
-__decorate([
-  attr
-], Button.prototype, "appearance", void 0);
-__decorate([
-  attr
-], Button.prototype, "shape", void 0);
-__decorate([
-  attr
-], Button.prototype, "size", void 0);
-__decorate([
-  attr({ attribute: "icon-only", mode: "boolean" })
-], Button.prototype, "iconOnly", void 0);
-applyMixins(Button, StartEnd);
-
-// node_modules/@fluentui/web-components/dist/esm/button/define.js
-Button.define(definition);
-
 // node_modules/@fluentui/web-components/dist/esm/utils/unique-id.js
 var uniqueIdCounter = 0;
 function uniqueId(prefix = "id-") {
@@ -4984,6 +4018,42 @@ var blackAlpha = {
   "70": "rgba(0, 0, 0, 0.7)",
   "80": "rgba(0, 0, 0, 0.8)",
   "90": "rgba(0, 0, 0, 0.9)"
+};
+var grey10Alpha = {
+  "5": "rgba(26, 26, 26, 0.05)",
+  "10": "rgba(26, 26, 26, 0.1)",
+  "20": "rgba(26, 26, 26, 0.2)",
+  "30": "rgba(26, 26, 26, 0.3)",
+  "40": "rgba(26, 26, 26, 0.4)",
+  "50": "rgba(26, 26, 26, 0.5)",
+  "60": "rgba(26, 26, 26, 0.6)",
+  "70": "rgba(26, 26, 26, 0.7)",
+  "80": "rgba(26, 26, 26, 0.8)",
+  "90": "rgba(26, 26, 26, 0.9)"
+};
+var grey12Alpha = {
+  "5": "rgba(31, 31, 31, 0.05)",
+  "10": "rgba(31, 31, 31, 0.1)",
+  "20": "rgba(31, 31, 31, 0.2)",
+  "30": "rgba(31, 31, 31, 0.3)",
+  "40": "rgba(31, 31, 31, 0.4)",
+  "50": "rgba(31, 31, 31, 0.5)",
+  "60": "rgba(31, 31, 31, 0.6)",
+  "70": "rgba(31, 31, 31, 0.7)",
+  "80": "rgba(31, 31, 31, 0.8)",
+  "90": "rgba(31, 31, 31, 0.9)"
+};
+var grey14Alpha = {
+  "5": "rgba(36, 36, 36, 0.05)",
+  "10": "rgba(36, 36, 36, 0.1)",
+  "20": "rgba(36, 36, 36, 0.2)",
+  "30": "rgba(36, 36, 36, 0.3)",
+  "40": "rgba(36, 36, 36, 0.4)",
+  "50": "rgba(36, 36, 36, 0.5)",
+  "60": "rgba(36, 36, 36, 0.6)",
+  "70": "rgba(36, 36, 36, 0.7)",
+  "80": "rgba(36, 36, 36, 0.8)",
+  "90": "rgba(36, 36, 36, 0.9)"
 };
 var white = "#ffffff";
 var black = "#000000";
@@ -6009,16 +5079,1420 @@ var brandWeb = {
   160: `#ebf3fc`
 };
 
+// node_modules/@fluentui/tokens/lib/alias/darkColorPalette.js
+var statusColorPaletteTokens2 = statusSharedColorNames.reduce((acc, sharedColor) => {
+  const color = sharedColor.slice(0, 1).toUpperCase() + sharedColor.slice(1);
+  const sharedColorTokens = {
+    [`colorPalette${color}Background1`]: statusSharedColors[sharedColor].shade40,
+    [`colorPalette${color}Background2`]: statusSharedColors[sharedColor].shade30,
+    [`colorPalette${color}Background3`]: statusSharedColors[sharedColor].primary,
+    [`colorPalette${color}Foreground1`]: statusSharedColors[sharedColor].tint30,
+    [`colorPalette${color}Foreground2`]: statusSharedColors[sharedColor].tint40,
+    [`colorPalette${color}Foreground3`]: statusSharedColors[sharedColor].tint20,
+    [`colorPalette${color}BorderActive`]: statusSharedColors[sharedColor].tint30,
+    [`colorPalette${color}Border1`]: statusSharedColors[sharedColor].primary,
+    [`colorPalette${color}Border2`]: statusSharedColors[sharedColor].tint20
+  };
+  return Object.assign(acc, sharedColorTokens);
+}, {});
+statusColorPaletteTokens2.colorPaletteRedForeground3 = statusSharedColors.red.tint30;
+statusColorPaletteTokens2.colorPaletteRedBorder2 = statusSharedColors.red.tint30;
+statusColorPaletteTokens2.colorPaletteGreenForeground3 = statusSharedColors.green.tint40;
+statusColorPaletteTokens2.colorPaletteGreenBorder2 = statusSharedColors.green.tint40;
+statusColorPaletteTokens2.colorPaletteDarkOrangeForeground3 = statusSharedColors.darkOrange.tint30;
+statusColorPaletteTokens2.colorPaletteDarkOrangeBorder2 = statusSharedColors.darkOrange.tint30;
+statusColorPaletteTokens2.colorPaletteRedForegroundInverted = statusSharedColors.red.primary;
+statusColorPaletteTokens2.colorPaletteGreenForegroundInverted = statusSharedColors.green.primary;
+statusColorPaletteTokens2.colorPaletteYellowForegroundInverted = statusSharedColors.yellow.shade30;
+var personaColorPaletteTokens2 = personaSharedColorNames.reduce((acc, sharedColor) => {
+  const color = sharedColor.slice(0, 1).toUpperCase() + sharedColor.slice(1);
+  const sharedColorTokens = {
+    [`colorPalette${color}Background2`]: personaSharedColors[sharedColor].shade30,
+    [`colorPalette${color}Foreground2`]: personaSharedColors[sharedColor].tint40,
+    [`colorPalette${color}BorderActive`]: personaSharedColors[sharedColor].tint30
+  };
+  return Object.assign(acc, sharedColorTokens);
+}, {});
+personaColorPaletteTokens2.colorPaletteDarkRedBackground2 = personaSharedColors.darkRed.shade20;
+personaColorPaletteTokens2.colorPalettePlumBackground2 = personaSharedColors.plum.shade20;
+var colorPaletteTokens2 = {
+  ...statusColorPaletteTokens2,
+  ...personaColorPaletteTokens2
+};
+var colorStatusTokens2 = Object.entries(statusColorMapping).reduce((acc, [statusColor, sharedColor]) => {
+  const color = statusColor.slice(0, 1).toUpperCase() + statusColor.slice(1);
+  const statusColorTokens = {
+    [`colorStatus${color}Background1`]: mappedStatusColors[sharedColor].shade40,
+    [`colorStatus${color}Background2`]: mappedStatusColors[sharedColor].shade30,
+    [`colorStatus${color}Background3`]: mappedStatusColors[sharedColor].primary,
+    [`colorStatus${color}Foreground1`]: mappedStatusColors[sharedColor].tint30,
+    [`colorStatus${color}Foreground2`]: mappedStatusColors[sharedColor].tint40,
+    [`colorStatus${color}Foreground3`]: mappedStatusColors[sharedColor].tint20,
+    [`colorStatus${color}BorderActive`]: mappedStatusColors[sharedColor].tint30,
+    [`colorStatus${color}ForegroundInverted`]: mappedStatusColors[sharedColor].shade10,
+    [`colorStatus${color}Border1`]: mappedStatusColors[sharedColor].primary,
+    [`colorStatus${color}Border2`]: mappedStatusColors[sharedColor].tint20
+  };
+  return Object.assign(acc, statusColorTokens);
+}, {});
+colorStatusTokens2.colorStatusDangerBackground3Hover = mappedStatusColors[statusColorMapping.danger].shade10;
+colorStatusTokens2.colorStatusDangerBackground3Pressed = mappedStatusColors[statusColorMapping.danger].shade20;
+colorStatusTokens2.colorStatusDangerForeground3 = mappedStatusColors[statusColorMapping.danger].tint40;
+colorStatusTokens2.colorStatusDangerBorder2 = mappedStatusColors[statusColorMapping.danger].tint30;
+colorStatusTokens2.colorStatusSuccessForeground3 = mappedStatusColors[statusColorMapping.success].tint40;
+colorStatusTokens2.colorStatusSuccessBorder2 = mappedStatusColors[statusColorMapping.success].tint40;
+colorStatusTokens2.colorStatusWarningForegroundInverted = mappedStatusColors[statusColorMapping.warning].shade20;
+
 // node_modules/@fluentui/tokens/lib/themes/web/lightTheme.js
 var webLightTheme = createLightTheme(brandWeb);
 
+// node_modules/@fluentui/tokens/lib/alias/darkColor.js
+var generateColorTokens2 = (brand) => ({
+  colorNeutralForeground1: white,
+  colorNeutralForeground1Hover: white,
+  colorNeutralForeground1Pressed: white,
+  colorNeutralForeground1Selected: white,
+  colorNeutralForeground2: grey[84],
+  colorNeutralForeground2Hover: white,
+  colorNeutralForeground2Pressed: white,
+  colorNeutralForeground2Selected: white,
+  colorNeutralForeground2BrandHover: brand[100],
+  colorNeutralForeground2BrandPressed: brand[90],
+  colorNeutralForeground2BrandSelected: brand[100],
+  colorNeutralForeground3: grey[68],
+  colorNeutralForeground3Hover: grey[84],
+  colorNeutralForeground3Pressed: grey[84],
+  colorNeutralForeground3Selected: grey[84],
+  colorNeutralForeground3BrandHover: brand[100],
+  colorNeutralForeground3BrandPressed: brand[90],
+  colorNeutralForeground3BrandSelected: brand[100],
+  colorNeutralForeground4: grey[60],
+  colorNeutralForeground5: grey[68],
+  colorNeutralForeground5Hover: white,
+  colorNeutralForeground5Pressed: white,
+  colorNeutralForeground5Selected: white,
+  colorNeutralForegroundDisabled: grey[36],
+  colorNeutralForegroundInvertedDisabled: whiteAlpha[40],
+  colorBrandForegroundLink: brand[100],
+  colorBrandForegroundLinkHover: brand[110],
+  colorBrandForegroundLinkPressed: brand[90],
+  colorBrandForegroundLinkSelected: brand[100],
+  colorNeutralForeground2Link: grey[84],
+  colorNeutralForeground2LinkHover: white,
+  colorNeutralForeground2LinkPressed: white,
+  colorNeutralForeground2LinkSelected: white,
+  colorCompoundBrandForeground1: brand[100],
+  colorCompoundBrandForeground1Hover: brand[110],
+  colorCompoundBrandForeground1Pressed: brand[90],
+  colorBrandForeground1: brand[100],
+  colorBrandForeground2: brand[110],
+  colorBrandForeground2Hover: brand[130],
+  colorBrandForeground2Pressed: brand[160],
+  colorNeutralForeground1Static: grey[14],
+  colorNeutralForegroundStaticInverted: white,
+  colorNeutralForegroundInverted: grey[14],
+  colorNeutralForegroundInvertedHover: grey[14],
+  colorNeutralForegroundInvertedPressed: grey[14],
+  colorNeutralForegroundInvertedSelected: grey[14],
+  colorNeutralForegroundInverted2: grey[14],
+  colorNeutralForegroundOnBrand: white,
+  colorNeutralForegroundInvertedLink: white,
+  colorNeutralForegroundInvertedLinkHover: white,
+  colorNeutralForegroundInvertedLinkPressed: white,
+  colorNeutralForegroundInvertedLinkSelected: white,
+  colorBrandForegroundInverted: brand[80],
+  colorBrandForegroundInvertedHover: brand[70],
+  colorBrandForegroundInvertedPressed: brand[60],
+  colorBrandForegroundOnLight: brand[80],
+  colorBrandForegroundOnLightHover: brand[70],
+  colorBrandForegroundOnLightPressed: brand[50],
+  colorBrandForegroundOnLightSelected: brand[60],
+  colorNeutralBackground1: grey[16],
+  colorNeutralBackground1Hover: grey[24],
+  colorNeutralBackground1Pressed: grey[12],
+  colorNeutralBackground1Selected: grey[22],
+  colorNeutralBackground2: grey[12],
+  colorNeutralBackground2Hover: grey[20],
+  colorNeutralBackground2Pressed: grey[8],
+  colorNeutralBackground2Selected: grey[18],
+  colorNeutralBackground3: grey[8],
+  colorNeutralBackground3Hover: grey[16],
+  colorNeutralBackground3Pressed: grey[4],
+  colorNeutralBackground3Selected: grey[14],
+  colorNeutralBackground4: grey[4],
+  colorNeutralBackground4Hover: grey[12],
+  colorNeutralBackground4Pressed: black,
+  colorNeutralBackground4Selected: grey[10],
+  colorNeutralBackground5: black,
+  colorNeutralBackground5Hover: grey[8],
+  colorNeutralBackground5Pressed: grey[2],
+  colorNeutralBackground5Selected: grey[6],
+  colorNeutralBackground6: grey[20],
+  colorNeutralBackground7: "#00000000",
+  colorNeutralBackground7Hover: grey[10],
+  colorNeutralBackground7Pressed: grey[4],
+  colorNeutralBackground7Selected: "#00000000",
+  colorNeutralBackground8: grey[16],
+  colorNeutralBackgroundInverted: white,
+  colorNeutralBackgroundInvertedHover: grey[96],
+  colorNeutralBackgroundInvertedPressed: grey[88],
+  colorNeutralBackgroundInvertedSelected: grey[92],
+  colorNeutralBackgroundStatic: grey[24],
+  colorNeutralBackgroundAlpha: grey10Alpha[50],
+  colorNeutralBackgroundAlpha2: grey12Alpha[70],
+  colorSubtleBackground: "transparent",
+  colorSubtleBackgroundHover: grey[22],
+  colorSubtleBackgroundPressed: grey[18],
+  colorSubtleBackgroundSelected: grey[20],
+  colorSubtleBackgroundLightAlphaHover: grey14Alpha[80],
+  colorSubtleBackgroundLightAlphaPressed: grey14Alpha[50],
+  colorSubtleBackgroundLightAlphaSelected: "transparent",
+  colorSubtleBackgroundInverted: "transparent",
+  colorSubtleBackgroundInvertedHover: blackAlpha[10],
+  colorSubtleBackgroundInvertedPressed: blackAlpha[30],
+  colorSubtleBackgroundInvertedSelected: blackAlpha[20],
+  colorTransparentBackground: "transparent",
+  colorTransparentBackgroundHover: "transparent",
+  colorTransparentBackgroundPressed: "transparent",
+  colorTransparentBackgroundSelected: "transparent",
+  colorNeutralBackgroundDisabled: grey[8],
+  colorNeutralBackgroundDisabled2: grey[16],
+  colorNeutralBackgroundInvertedDisabled: whiteAlpha[10],
+  colorNeutralStencil1: grey[34],
+  colorNeutralStencil2: grey[20],
+  colorNeutralStencil1Alpha: whiteAlpha[10],
+  colorNeutralStencil2Alpha: whiteAlpha[5],
+  colorBackgroundOverlay: blackAlpha[50],
+  colorScrollbarOverlay: whiteAlpha[60],
+  colorBrandBackground: brand[70],
+  colorBrandBackgroundHover: brand[80],
+  colorBrandBackgroundPressed: brand[40],
+  colorBrandBackgroundSelected: brand[60],
+  colorCompoundBrandBackground: brand[100],
+  colorCompoundBrandBackgroundHover: brand[110],
+  colorCompoundBrandBackgroundPressed: brand[90],
+  colorBrandBackgroundStatic: brand[80],
+  colorBrandBackground2: brand[20],
+  colorBrandBackground2Hover: brand[40],
+  colorBrandBackground2Pressed: brand[10],
+  colorBrandBackground3Static: brand[60],
+  colorBrandBackground4Static: brand[40],
+  colorBrandBackgroundInverted: white,
+  colorBrandBackgroundInvertedHover: brand[160],
+  colorBrandBackgroundInvertedPressed: brand[140],
+  colorBrandBackgroundInvertedSelected: brand[150],
+  colorNeutralCardBackground: grey[20],
+  colorNeutralCardBackgroundHover: grey[24],
+  colorNeutralCardBackgroundPressed: grey[18],
+  colorNeutralCardBackgroundSelected: grey[22],
+  colorNeutralCardBackgroundDisabled: grey[8],
+  colorNeutralStrokeAccessible: grey[68],
+  colorNeutralStrokeAccessibleHover: grey[74],
+  colorNeutralStrokeAccessiblePressed: grey[70],
+  colorNeutralStrokeAccessibleSelected: brand[100],
+  colorNeutralStroke1: grey[40],
+  colorNeutralStroke1Hover: grey[46],
+  colorNeutralStroke1Pressed: grey[42],
+  colorNeutralStroke1Selected: grey[44],
+  colorNeutralStroke2: grey[32],
+  colorNeutralStroke3: grey[24],
+  colorNeutralStroke4: grey[24],
+  colorNeutralStroke4Hover: grey[18],
+  colorNeutralStroke4Pressed: grey[14],
+  colorNeutralStroke4Selected: grey[24],
+  colorNeutralStrokeSubtle: grey[4],
+  colorNeutralStrokeOnBrand: grey[16],
+  colorNeutralStrokeOnBrand2: white,
+  colorNeutralStrokeOnBrand2Hover: white,
+  colorNeutralStrokeOnBrand2Pressed: white,
+  colorNeutralStrokeOnBrand2Selected: white,
+  colorBrandStroke1: brand[100],
+  colorBrandStroke2: brand[50],
+  colorBrandStroke2Hover: brand[50],
+  colorBrandStroke2Pressed: brand[30],
+  colorBrandStroke2Contrast: brand[50],
+  colorCompoundBrandStroke: brand[100],
+  colorCompoundBrandStrokeHover: brand[110],
+  colorCompoundBrandStrokePressed: brand[90],
+  colorNeutralStrokeDisabled: grey[26],
+  colorNeutralStrokeDisabled2: grey[24],
+  colorNeutralStrokeInvertedDisabled: whiteAlpha[40],
+  colorTransparentStroke: "transparent",
+  colorTransparentStrokeInteractive: "transparent",
+  colorTransparentStrokeDisabled: "transparent",
+  colorNeutralStrokeAlpha: whiteAlpha[10],
+  colorNeutralStrokeAlpha2: whiteAlpha[20],
+  colorStrokeFocus1: black,
+  colorStrokeFocus2: white,
+  colorNeutralShadowAmbient: "rgba(0,0,0,0.24)",
+  colorNeutralShadowKey: "rgba(0,0,0,0.28)",
+  colorNeutralShadowAmbientLighter: "rgba(0,0,0,0.12)",
+  colorNeutralShadowKeyLighter: "rgba(0,0,0,0.14)",
+  colorNeutralShadowAmbientDarker: "rgba(0,0,0,0.40)",
+  colorNeutralShadowKeyDarker: "rgba(0,0,0,0.48)",
+  colorBrandShadowAmbient: "rgba(0,0,0,0.30)",
+  colorBrandShadowKey: "rgba(0,0,0,0.25)"
+});
+
+// node_modules/@fluentui/tokens/lib/utils/createDarkTheme.js
+var createDarkTheme = (brand) => {
+  const colorTokens = generateColorTokens2(brand);
+  return {
+    ...borderRadius,
+    ...fontSizes,
+    ...lineHeights,
+    ...fontFamilies,
+    ...fontWeights,
+    ...strokeWidths,
+    ...horizontalSpacings,
+    ...verticalSpacings,
+    ...durations,
+    ...curves,
+    ...colorTokens,
+    ...colorPaletteTokens2,
+    ...colorStatusTokens2,
+    ...createShadowTokens(colorTokens.colorNeutralShadowAmbient, colorTokens.colorNeutralShadowKey),
+    ...createShadowTokens(colorTokens.colorBrandShadowAmbient, colorTokens.colorBrandShadowKey, "Brand")
+  };
+};
+
+// node_modules/@fluentui/tokens/lib/themes/web/darkTheme.js
+var webDarkTheme = createDarkTheme(brandWeb);
+
+// src/Wasm.FluentUIWebComponents/web/theme.ts
+function resolveTheme(theme) {
+  switch (theme) {
+    case "light":
+      return webLightTheme;
+    case "dark":
+      return webDarkTheme;
+    default: {
+      const unsupported = theme;
+      throw new Error(`Unsupported browser theme: ${String(unsupported)}`);
+    }
+  }
+}
+var BrowserTheme = class {
+  #element;
+  #preference = matchMedia("(prefers-color-scheme: dark)");
+  #onChanged;
+  #previousColorScheme;
+  #previousColorSchemePriority;
+  #listening = false;
+  #disposed = false;
+  constructor(element, onChanged) {
+    if (element === document.body || !document.body?.contains(element)) {
+      throw new Error("Use a dedicated light-DOM mount element inside document.body for the MAUI app");
+    }
+    this.#element = element;
+    this.#onChanged = onChanged;
+    this.#previousColorScheme = element.style.getPropertyValue("color-scheme");
+    this.#previousColorSchemePriority = element.style.getPropertyPriority("color-scheme");
+    this.apply(this.getSystemTheme());
+  }
+  getSystemTheme() {
+    return this.#preference.matches ? "dark" : "light";
+  }
+  getColor(token, theme) {
+    const preset = resolveTheme(theme);
+    switch (token) {
+      case "colorBrandForeground1":
+      case "colorNeutralForeground1":
+      case "colorNeutralForeground3":
+      case "colorNeutralBackground3":
+      case "colorNeutralBackground1":
+      case "colorNeutralStroke2":
+        return preset[token];
+      default:
+        throw new Error(`Unsupported Fluent color token: ${token}`);
+    }
+  }
+  start() {
+    if (this.#disposed) {
+      throw new Error("Browser theme is disposed");
+    }
+    if (!this.#listening) {
+      this.#preference.addEventListener("change", this.#changed);
+      this.#listening = true;
+    }
+    return this.getSystemTheme();
+  }
+  #changed = () => {
+    if (!this.#disposed) {
+      this.#onChanged(this.getSystemTheme());
+    }
+  };
+  apply(theme) {
+    const preset = resolveTheme(theme);
+    if (this.#disposed) {
+      return;
+    }
+    setTheme(preset, this.#element);
+    this.#element.style.setProperty("color-scheme", theme);
+  }
+  dispose() {
+    if (this.#disposed) {
+      return;
+    }
+    this.#disposed = true;
+    this.#preference.removeEventListener("change", this.#changed);
+    this.#listening = false;
+    setTheme(null, this.#element);
+    this.#element.style.setProperty("color-scheme", this.#previousColorScheme, this.#previousColorSchemePriority);
+  }
+};
+
+// src/Wasm.FluentUIWebComponents/web/bridge.ts
+var DomBrowserBridge = class {
+  imports;
+  #viewport;
+  #getApi;
+  #onError;
+  #theme;
+  #elements = /* @__PURE__ */ new Map();
+  #clicks = /* @__PURE__ */ new Map();
+  #scrolls = /* @__PURE__ */ new Map();
+  #timers = /* @__PURE__ */ new Map();
+  #sequence = 0;
+  #observer;
+  #mountedId = 0;
+  #frameId = 0;
+  #stopped = false;
+  constructor(viewport, getApi, onError) {
+    this.#viewport = viewport;
+    this.#getApi = getApi;
+    this.#onError = onError;
+    this.#theme = new BrowserTheme(viewport, (theme) => {
+      this.#invoke(() => {
+        this.#getApi().OnSystemThemeChanged(theme);
+      });
+    });
+    this.imports = {
+      report: this.#report.bind(this),
+      getSystemTheme: this.#theme.getSystemTheme.bind(this.#theme),
+      getThemeColor: this.#theme.getColor.bind(this.#theme),
+      startThemeTracking: this.#theme.start.bind(this.#theme),
+      applyTheme: this.#theme.apply.bind(this.#theme),
+      create: this.#create.bind(this),
+      style: this.#style.bind(this),
+      property: this.#property.bind(this),
+      attribute: this.#attribute.bind(this),
+      frame: this.#frame.bind(this),
+      measure: this.#measure.bind(this),
+      insert: this.#insert.bind(this),
+      remove: this.#remove.bind(this),
+      release: this.#release.bind(this),
+      mount: this.#mount.bind(this),
+      unmount: this.#unmount.bind(this),
+      subscribeClick: this.#subscribeClick.bind(this),
+      unsubscribeClick: this.#unsubscribeClick.bind(this),
+      subscribeScroll: this.#subscribeScroll.bind(this),
+      requestLayout: this.#requestLayout,
+      schedule: this.#schedule.bind(this),
+      cancelSchedule: this.#cancelSchedule.bind(this),
+      stop: this.#stop.bind(this)
+    };
+  }
+  #get(id3) {
+    if (!Number.isInteger(id3) || id3 <= 0 || id3 > 2147483647) {
+      throw new Error(`Invalid MAUI element handle: ${id3}`);
+    }
+    const element = this.#elements.get(id3);
+    if (!element) {
+      throw new Error(`Stale MAUI element handle: ${id3}`);
+    }
+    return element;
+  }
+  #invoke(action) {
+    try {
+      action();
+    } catch (error) {
+      this.#onError(error instanceof Error ? error.message : String(error));
+    }
+  }
+  // Also passed directly to ResizeObserver, so retain the instance receiver.
+  #requestLayout = () => {
+    if (this.#stopped || !this.#mountedId || this.#frameId) {
+      return;
+    }
+    this.#frameId = requestAnimationFrame(() => {
+      this.#frameId = 0;
+      if (this.#stopped || !this.#mountedId) {
+        return;
+      }
+      this.#invoke(() => {
+        this.#getApi().LayoutTick(this.#viewport.clientWidth, this.#viewport.clientHeight);
+      });
+    });
+  };
+  #unmount(id3) {
+    if (this.#mountedId !== id3 || !this.#mountedId) {
+      return;
+    }
+    this.#observer?.disconnect();
+    this.#observer = void 0;
+    cancelAnimationFrame(this.#frameId);
+    this.#frameId = 0;
+    this.#mountedId = 0;
+    this.#get(id3).remove();
+  }
+  #unsubscribeClick(id3) {
+    const element = this.#get(id3);
+    const callback = this.#clicks.get(id3);
+    if (callback) {
+      element.removeEventListener("click", callback);
+    }
+    this.#clicks.delete(id3);
+  }
+  #stop() {
+    this.#stopped = true;
+    this.#theme.dispose();
+    if (this.#mountedId) {
+      this.#unmount(this.#mountedId);
+    }
+    for (const timer of this.#timers.values()) {
+      clearTimeout(timer);
+    }
+    this.#timers.clear();
+  }
+  #report(message) {
+    this.#onError(message);
+  }
+  #create(tagName2) {
+    if (this.#stopped) {
+      throw new Error("MAUI bridge is stopped");
+    }
+    if (tagName2 !== tagName2.toLowerCase()) {
+      throw new Error(`Expected a lowercase HTML tag name: ${tagName2}`);
+    }
+    if (tagName2.includes("-") && !customElements.get(tagName2)) {
+      throw new Error(`Custom element is not registered: ${tagName2}`);
+    }
+    if (this.#sequence >= 2147483647) {
+      throw new Error("MAUI element handle limit reached");
+    }
+    const element = document.createElement(tagName2);
+    if (element instanceof HTMLUnknownElement) {
+      throw new Error(`Unknown HTML element: ${tagName2}`);
+    }
+    const id3 = ++this.#sequence;
+    element.style.position = "absolute";
+    element.style.boxSizing = "border-box";
+    this.#elements.set(id3, element);
+    return id3;
+  }
+  #style(id3, name, value) {
+    this.#get(id3).style.setProperty(name, value);
+  }
+  #property(id3, name, value) {
+    const element = this.#get(id3);
+    if (name === "__proto__" || name === "prototype" || name === "constructor" || !(name in element)) {
+      throw new Error(`Unsupported element property: ${name}`);
+    }
+    if (!Reflect.set(element, name, value)) {
+      throw new Error(`Element property is not writable: ${name}`);
+    }
+  }
+  #attribute(id3, name, value) {
+    const element = this.#get(id3);
+    if (value === null) {
+      element.removeAttribute(name);
+    } else {
+      element.setAttribute(name, value);
+    }
+  }
+  #frame(id3, x, y, width, height) {
+    if (![x, y, width, height].every(Number.isFinite)) {
+      throw new Error("Non-finite MAUI frame");
+    }
+    Object.assign(this.#get(id3).style, {
+      left: `${x}px`,
+      top: `${y}px`,
+      width: `${width}px`,
+      height: `${height}px`
+    });
+  }
+  #measure(id3, width, height, returnHeight) {
+    const element = this.#get(id3);
+    const saved = element.style.cssText;
+    try {
+      Object.assign(element.style, {
+        width: "max-content",
+        height: "auto",
+        maxWidth: Number.isFinite(width) ? `${Math.max(0, width)}px` : "none",
+        maxHeight: "none"
+      });
+      const bounds = element.getBoundingClientRect();
+      return returnHeight ? bounds.height : bounds.width;
+    } finally {
+      element.style.cssText = saved;
+    }
+  }
+  #insert(parent, child, index) {
+    const container = this.#get(parent);
+    const element = this.#get(child);
+    element.remove();
+    container.insertBefore(element, container.children[index] ?? null);
+  }
+  #remove(id3) {
+    this.#get(id3).remove();
+  }
+  #release(id3) {
+    const element = this.#get(id3);
+    this.#unmount(id3);
+    this.#unsubscribeClick(id3);
+    const onScroll = this.#scrolls.get(id3);
+    if (onScroll) {
+      element.removeEventListener("scroll", onScroll);
+    }
+    this.#scrolls.delete(id3);
+    this.#elements.delete(id3);
+    element.remove();
+  }
+  #mount(id3) {
+    if (this.#stopped) {
+      throw new Error("MAUI bridge is stopped");
+    }
+    if (this.#mountedId) {
+      throw new Error("MAUI bridge supports one mounted window");
+    }
+    this.#viewport.append(this.#get(id3));
+    this.#mountedId = id3;
+    this.#observer = new ResizeObserver(this.#requestLayout);
+    this.#observer.observe(this.#viewport);
+    this.#requestLayout();
+  }
+  #subscribeClick(id3) {
+    if (this.#stopped) {
+      throw new Error("MAUI bridge is stopped");
+    }
+    if (this.#clicks.has(id3)) {
+      throw new Error("Duplicate MAUI button subscription");
+    }
+    const element = this.#get(id3);
+    const callback = () => {
+      if (this.#stopped || !this.#elements.has(id3)) {
+        return;
+      }
+      this.#invoke(() => {
+        this.#getApi().OnClick(id3);
+      });
+    };
+    this.#clicks.set(id3, callback);
+    element.addEventListener("click", callback);
+  }
+  #subscribeScroll(id3) {
+    if (this.#stopped) {
+      throw new Error("MAUI bridge is stopped");
+    }
+    if (this.#scrolls.has(id3)) {
+      throw new Error("Duplicate scroll subscription");
+    }
+    const element = this.#get(id3);
+    const callback = () => {
+      if (this.#stopped || !this.#elements.has(id3)) {
+        return;
+      }
+      this.#invoke(() => {
+        this.#getApi().OnScroll(id3, element.scrollLeft, element.scrollTop);
+      });
+    };
+    this.#scrolls.set(id3, callback);
+    element.addEventListener("scroll", callback, { passive: true });
+  }
+  #schedule(id3, milliseconds) {
+    if (this.#stopped) {
+      return;
+    }
+    clearTimeout(this.#timers.get(id3));
+    this.#timers.set(id3, setTimeout(() => {
+      this.#timers.delete(id3);
+      if (!this.#stopped) {
+        this.#invoke(() => {
+          this.#getApi().RunScheduled(id3);
+        });
+      }
+    }, milliseconds));
+  }
+  #cancelSchedule(id3) {
+    clearTimeout(this.#timers.get(id3));
+    this.#timers.delete(id3);
+  }
+  dispose = () => {
+    this.#stop();
+    for (const id3 of this.#elements.keys()) {
+      this.#release(id3);
+    }
+  };
+};
+
+// node_modules/@fluentui/web-components/dist/esm/fluent-design-system.js
+var FluentDesignSystem = Object.freeze({
+  prefix: "fluent",
+  shadowRootMode: "open",
+  registry: globalThis.customElements
+});
+
+// node_modules/@fluentui/web-components/dist/esm/button/button.options.js
+var ButtonType = {
+  submit: "submit",
+  reset: "reset",
+  button: "button"
+};
+var tagName = `${FluentDesignSystem.prefix}-button`;
+
+// node_modules/@fluentui/web-components/dist/esm/utils/display.js
+var hidden = `:host([hidden]){display:none}`;
+function display(displayValue) {
+  return `${hidden}:host{display:${displayValue}}`;
+}
+
+// node_modules/@fluentui/web-components/dist/esm/theme/design-tokens.js
+var colorNeutralForeground1 = "var(--colorNeutralForeground1)";
+var colorNeutralForeground1Hover = "var(--colorNeutralForeground1Hover)";
+var colorNeutralForeground1Pressed = "var(--colorNeutralForeground1Pressed)";
+var colorNeutralForeground2 = "var(--colorNeutralForeground2)";
+var colorNeutralForeground2Hover = "var(--colorNeutralForeground2Hover)";
+var colorNeutralForeground2Pressed = "var(--colorNeutralForeground2Pressed)";
+var colorNeutralForeground2BrandHover = "var(--colorNeutralForeground2BrandHover)";
+var colorNeutralForeground2BrandPressed = "var(--colorNeutralForeground2BrandPressed)";
+var colorNeutralForegroundDisabled = "var(--colorNeutralForegroundDisabled)";
+var colorNeutralForegroundOnBrand = "var(--colorNeutralForegroundOnBrand)";
+var colorNeutralBackground1 = "var(--colorNeutralBackground1)";
+var colorNeutralBackground1Hover = "var(--colorNeutralBackground1Hover)";
+var colorNeutralBackground1Pressed = "var(--colorNeutralBackground1Pressed)";
+var colorSubtleBackground = "var(--colorSubtleBackground)";
+var colorSubtleBackgroundHover = "var(--colorSubtleBackgroundHover)";
+var colorSubtleBackgroundPressed = "var(--colorSubtleBackgroundPressed)";
+var colorTransparentBackground = "var(--colorTransparentBackground)";
+var colorTransparentBackgroundHover = "var(--colorTransparentBackgroundHover)";
+var colorTransparentBackgroundPressed = "var(--colorTransparentBackgroundPressed)";
+var colorNeutralBackgroundDisabled = "var(--colorNeutralBackgroundDisabled)";
+var colorBrandBackground = "var(--colorBrandBackground)";
+var colorBrandBackgroundHover = "var(--colorBrandBackgroundHover)";
+var colorBrandBackgroundPressed = "var(--colorBrandBackgroundPressed)";
+var colorNeutralStroke1 = "var(--colorNeutralStroke1)";
+var colorNeutralStroke1Hover = "var(--colorNeutralStroke1Hover)";
+var colorNeutralStroke1Pressed = "var(--colorNeutralStroke1Pressed)";
+var colorNeutralStrokeDisabled = "var(--colorNeutralStrokeDisabled)";
+var colorTransparentStroke = "var(--colorTransparentStroke)";
+var colorStrokeFocus2 = "var(--colorStrokeFocus2)";
+var borderRadiusNone = "var(--borderRadiusNone)";
+var borderRadiusSmall = "var(--borderRadiusSmall)";
+var borderRadiusMedium = "var(--borderRadiusMedium)";
+var borderRadiusLarge = "var(--borderRadiusLarge)";
+var borderRadiusCircular = "var(--borderRadiusCircular)";
+var fontFamilyBase = "var(--fontFamilyBase)";
+var fontSizeBase200 = "var(--fontSizeBase200)";
+var fontSizeBase300 = "var(--fontSizeBase300)";
+var fontSizeBase400 = "var(--fontSizeBase400)";
+var fontWeightRegular = "var(--fontWeightRegular)";
+var fontWeightSemibold = "var(--fontWeightSemibold)";
+var lineHeightBase200 = "var(--lineHeightBase200)";
+var lineHeightBase300 = "var(--lineHeightBase300)";
+var lineHeightBase400 = "var(--lineHeightBase400)";
+var shadow2 = "var(--shadow2)";
+var shadow4 = "var(--shadow4)";
+var strokeWidthThin = "var(--strokeWidthThin)";
+var strokeWidthThick = "var(--strokeWidthThick)";
+var spacingHorizontalXS = "var(--spacingHorizontalXS)";
+var spacingHorizontalSNudge = "var(--spacingHorizontalSNudge)";
+var spacingHorizontalS = "var(--spacingHorizontalS)";
+var spacingHorizontalM = "var(--spacingHorizontalM)";
+var spacingHorizontalL = "var(--spacingHorizontalL)";
+var durationFaster = "var(--durationFaster)";
+var curveEasyEase = "var(--curveEasyEase)";
+
+// node_modules/@fluentui/web-components/dist/esm/button/button.styles.js
+var baseButtonStyles = css`
+  ${display("inline-flex")}
+
+  :host {
+    --icon-spacing: ${spacingHorizontalSNudge};
+    position: relative;
+    contain: layout style;
+    vertical-align: middle;
+    align-items: center;
+    box-sizing: border-box;
+    justify-content: center;
+    text-align: center;
+    text-decoration-line: none;
+    margin: 0;
+    min-height: 32px;
+    outline-style: none;
+    background-color: ${colorNeutralBackground1};
+    color: ${colorNeutralForeground1};
+    border: ${strokeWidthThin} solid ${colorNeutralStroke1};
+    padding: 0 ${spacingHorizontalM};
+    min-width: 96px;
+    border-radius: ${borderRadiusMedium};
+    font-size: ${fontSizeBase300};
+    font-family: ${fontFamilyBase};
+    font-weight: ${fontWeightSemibold};
+    line-height: ${lineHeightBase300};
+    transition-duration: ${durationFaster};
+    transition-property: background, border, color;
+    transition-timing-function: ${curveEasyEase};
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .content {
+    display: inherit;
+  }
+
+  :host(:hover) {
+    background-color: ${colorNeutralBackground1Hover};
+    color: ${colorNeutralForeground1Hover};
+    border-color: ${colorNeutralStroke1Hover};
+  }
+
+  :host(:hover:active) {
+    background-color: ${colorNeutralBackground1Pressed};
+    border-color: ${colorNeutralStroke1Pressed};
+    color: ${colorNeutralForeground1Pressed};
+    outline-style: none;
+  }
+
+  :host(:focus-visible) {
+    border-color: ${colorTransparentStroke};
+    outline: ${strokeWidthThick} solid ${colorTransparentStroke};
+    box-shadow: ${shadow4}, 0 0 0 2px ${colorStrokeFocus2};
+  }
+
+  @media screen and (prefers-reduced-motion: reduce) {
+    :host {
+      transition-duration: 0.01ms;
+    }
+  }
+
+  ::slotted(svg) {
+    font-size: 20px;
+    height: 20px;
+    width: 20px;
+    fill: currentColor;
+  }
+
+  ::slotted([slot='start']) {
+    margin-inline-end: var(--icon-spacing);
+  }
+
+  ::slotted([slot='end']),
+  [slot='end'] {
+    flex-shrink: 0;
+    margin-inline-start: var(--icon-spacing);
+  }
+
+  :host([icon-only]) {
+    min-width: 32px;
+    max-width: 32px;
+  }
+
+  :host([size='small']) {
+    --icon-spacing: ${spacingHorizontalXS};
+    min-height: 24px;
+    min-width: 64px;
+    padding: 0 ${spacingHorizontalS};
+    border-radius: ${borderRadiusSmall};
+    font-size: ${fontSizeBase200};
+    line-height: ${lineHeightBase200};
+    font-weight: ${fontWeightRegular};
+  }
+
+  :host([size='small'][icon-only]) {
+    min-width: 24px;
+    max-width: 24px;
+  }
+
+  :host([size='large']) {
+    min-height: 40px;
+    border-radius: ${borderRadiusLarge};
+    padding: 0 ${spacingHorizontalL};
+    font-size: ${fontSizeBase400};
+    line-height: ${lineHeightBase400};
+  }
+
+  :host([size='large'][icon-only]) {
+    min-width: 40px;
+    max-width: 40px;
+  }
+
+  :host([size='large']) ::slotted(svg) {
+    font-size: 24px;
+    height: 24px;
+    width: 24px;
+  }
+
+  :host(:is([shape='circular'], [shape='circular']:focus-visible)) {
+    border-radius: ${borderRadiusCircular};
+  }
+
+  :host(:is([shape='square'], [shape='square']:focus-visible)) {
+    border-radius: ${borderRadiusNone};
+  }
+
+  :host([appearance='primary']) {
+    background-color: ${colorBrandBackground};
+    color: ${colorNeutralForegroundOnBrand};
+    border-color: transparent;
+  }
+
+  :host([appearance='primary']:hover) {
+    background-color: ${colorBrandBackgroundHover};
+  }
+
+  :host([appearance='primary']:is(:hover, :hover:active):not(:focus-visible)) {
+    border-color: transparent;
+  }
+
+  :host([appearance='primary']:is(:hover, :hover:active)) {
+    color: ${colorNeutralForegroundOnBrand};
+  }
+
+  :host([appearance='primary']:hover:active) {
+    background-color: ${colorBrandBackgroundPressed};
+  }
+
+  :host([appearance='primary']:focus-visible) {
+    border-color: ${colorNeutralForegroundOnBrand};
+    box-shadow: ${shadow2}, 0 0 0 2px ${colorStrokeFocus2};
+  }
+
+  :host([appearance='outline']) {
+    background-color: ${colorTransparentBackground};
+  }
+
+  :host([appearance='outline']:hover) {
+    background-color: ${colorTransparentBackgroundHover};
+  }
+
+  :host([appearance='outline']:hover:active) {
+    background-color: ${colorTransparentBackgroundPressed};
+  }
+
+  :host([appearance='subtle']) {
+    background-color: ${colorSubtleBackground};
+    color: ${colorNeutralForeground2};
+    border-color: transparent;
+  }
+
+  :host([appearance='subtle']:hover) {
+    background-color: ${colorSubtleBackgroundHover};
+    color: ${colorNeutralForeground2Hover};
+    border-color: transparent;
+  }
+
+  :host([appearance='subtle']:hover:active) {
+    background-color: ${colorSubtleBackgroundPressed};
+    color: ${colorNeutralForeground2Pressed};
+    border-color: transparent;
+  }
+
+  :host([appearance='subtle']:hover) ::slotted(svg) {
+    fill: ${colorNeutralForeground2BrandHover};
+  }
+
+  :host([appearance='subtle']:hover:active) ::slotted(svg) {
+    fill: ${colorNeutralForeground2BrandPressed};
+  }
+
+  :host([appearance='transparent']) {
+    background-color: ${colorTransparentBackground};
+    color: ${colorNeutralForeground2};
+  }
+
+  :host([appearance='transparent']:hover) {
+    background-color: ${colorTransparentBackgroundHover};
+    color: ${colorNeutralForeground2BrandHover};
+  }
+
+  :host([appearance='transparent']:hover:active) {
+    background-color: ${colorTransparentBackgroundPressed};
+    color: ${colorNeutralForeground2BrandPressed};
+  }
+
+  :host(:is([appearance='transparent'], [appearance='transparent']:is(:hover, :active))) {
+    border-color: transparent;
+  }
+`;
+var styles = css`
+  ${baseButtonStyles}
+
+  :host(:is(:disabled, [disabled], [disabled-focusable], [appearance]:disabled, [appearance][disabled], [appearance][disabled-focusable])),
+  :host(:is(:disabled, [disabled], [disabled-focusable], [appearance]:disabled, [appearance][disabled], [appearance][disabled-focusable]):hover),
+  :host(:is(:disabled, [disabled], [disabled-focusable], [appearance]:disabled, [appearance][disabled], [appearance][disabled-focusable]):hover:active) {
+    background-color: ${colorNeutralBackgroundDisabled};
+    border-color: ${colorNeutralStrokeDisabled};
+    color: ${colorNeutralForegroundDisabled};
+    cursor: not-allowed;
+  }
+
+  :host([appearance='primary']:is(:disabled, [disabled], [disabled-focusable])),
+  :host([appearance='primary']:is(:disabled, [disabled], [disabled-focusable]):is(:hover, :hover:active)) {
+    border-color: transparent;
+  }
+
+  :host([appearance='outline']:is(:disabled, [disabled], [disabled-focusable])),
+  :host([appearance='outline']:is(:disabled, [disabled], [disabled-focusable]):is(:hover, :hover:active)) {
+    background-color: ${colorTransparentBackground};
+  }
+
+  :host([appearance='subtle']:is(:disabled, [disabled], [disabled-focusable])),
+  :host([appearance='subtle']:is(:disabled, [disabled], [disabled-focusable]):is(:hover, :hover:active)) {
+    background-color: ${colorTransparentBackground};
+    border-color: transparent;
+  }
+
+  :host([appearance='transparent']:is(:disabled, [disabled], [disabled-focusable])),
+  :host([appearance='transparent']:is(:disabled, [disabled], [disabled-focusable]):is(:hover, :hover:active)) {
+    border-color: transparent;
+    background-color: ${colorTransparentBackground};
+  }
+
+  @media (forced-colors: active) {
+    :host {
+      background-color: ButtonFace;
+      color: ButtonText;
+    }
+
+    :host(:is(:hover, :focus-visible)) {
+      border-color: Highlight !important;
+    }
+
+    :host([appearance='primary']:not(:is(:hover, :focus-visible))) {
+      background-color: Highlight;
+      color: HighlightText;
+      forced-color-adjust: none;
+    }
+
+    :host(
+        :is(
+            :disabled,
+            [disabled],
+            [disabled-focusable],
+            [appearance]:disabled,
+            [appearance][disabled],
+            [appearance][disabled-focusable]
+          )
+      ) {
+      background-color: ButtonFace;
+      color: GrayText;
+      border-color: ButtonText;
+    }
+  }
+`;
+
+// node_modules/@fluentui/web-components/dist/esm/utils/template-helpers.js
+function staticallyCompose(item) {
+  if (!item) {
+    return InlineTemplateDirective.empty;
+  }
+  if (typeof item === "string") {
+    return new InlineTemplateDirective(item);
+  }
+  if ("inline" in item) {
+    return item.inline();
+  }
+  return item;
+}
+
+// node_modules/@fluentui/web-components/dist/esm/patterns/start-end.js
+var StartEnd = class {
+};
+function endSlotTemplate(options) {
+  return html` <slot name="end" ${ref("end")}>${staticallyCompose(options.end)}</slot> `.inline();
+}
+function startSlotTemplate(options) {
+  return html` <slot name="start" ${ref("start")}>${staticallyCompose(options.start)}</slot> `.inline();
+}
+
+// node_modules/@fluentui/web-components/dist/esm/button/button.template.js
+function buttonTemplate(options = {}) {
+  return html`
+    <template
+      @click="${(x, c) => x.clickHandler(c.event)}"
+      @keypress="${(x, c) => x.keypressHandler(c.event)}"
+    >
+      ${startSlotTemplate(options)}
+      <span class="content" part="content">
+        <slot ${slotted("defaultSlottedContent")}></slot>
+      </span>
+      ${endSlotTemplate(options)}
+    </template>
+  `;
+}
+var template = buttonTemplate();
+
+// node_modules/@fluentui/web-components/dist/esm/button/button.definition.js
+var definition = {
+  name: tagName,
+  registry: FluentDesignSystem.registry,
+  styles,
+  template
+};
+
+// node_modules/tslib/tslib.es6.mjs
+function __decorate(decorators, target, key, desc) {
+  var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+  if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+  else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+  return c > 3 && r && Object.defineProperty(target, key, r), r;
+}
+
+// node_modules/@fluentui/web-components/dist/esm/utils/apply-mixins.js
+function applyMixins(derivedCtor, ...baseCtors) {
+  const derivedAttributes = AttributeConfiguration.locate(derivedCtor);
+  baseCtors.forEach((baseCtor) => {
+    Object.getOwnPropertyNames(baseCtor.prototype).forEach((name) => {
+      if (name !== "constructor") {
+        Object.defineProperty(
+          derivedCtor.prototype,
+          name,
+          /* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */
+          Object.getOwnPropertyDescriptor(baseCtor.prototype, name)
+        );
+      }
+    });
+    const baseAttributes = AttributeConfiguration.locate(baseCtor);
+    baseAttributes.forEach((x) => derivedAttributes.push(x));
+  });
+}
+
+// node_modules/@fluentui/web-components/dist/esm/utils/autofocus.js
+function maybeSetAutoFocus(element) {
+  const doc = element.ownerDocument;
+  if (element?.isConnected && element?.hasAttribute("autofocus") && // Note: opacity=0 is considered visible based on the native `autofocus` implementation
+  element?.checkVisibility?.({ contentVisibilityAuto: true, visibilityProperty: true }) && [null, element, doc.body, doc.documentElement].includes(doc.activeElement)) {
+    Updates.enqueue(() => {
+      element.focus();
+    });
+  }
+}
+
+// node_modules/@fluentui/web-components/dist/esm/button/button.base.js
+var BaseButton = class extends FASTElement {
+  /**
+   * Handles changes to the disabled attribute. If the button is disabled, it
+   * should not be focusable.
+   *
+   * @param previous - the previous disabled value
+   * @param next - the new disabled value
+   * @internal
+   */
+  disabledChanged() {
+    this.setTabIndex();
+  }
+  /**
+   * Sets the element's internal disabled state when the element is focusable while disabled.
+   *
+   * @param previous - the previous disabledFocusable value
+   * @param next - the current disabledFocusable value
+   * @internal
+   */
+  disabledFocusableChanged(previous, next2) {
+    if (this.elementInternals) {
+      this.elementInternals.ariaDisabled = `${!!next2}`;
+    }
+  }
+  /**
+   * The associated form element.
+   *
+   * @public
+   */
+  get form() {
+    return this.elementInternals.form;
+  }
+  static {
+    this.formAssociated = true;
+  }
+  /**
+   * A reference to all associated label elements.
+   *
+   * @public
+   */
+  get labels() {
+    return Object.freeze(Array.from(this.elementInternals.labels));
+  }
+  /**
+   * Removes the form submission fallback control when the type changes.
+   *
+   * @param previous - the previous type value
+   * @param next - the new type value
+   * @internal
+   */
+  typeChanged(previous, next2) {
+    if (next2 !== ButtonType.submit) {
+      this.formSubmissionFallbackControl?.remove();
+      this.shadowRoot?.querySelector('slot[name="internal"]')?.remove();
+    }
+  }
+  /**
+   * Handles the button click event.
+   *
+   * @param e - The event object
+   * @internal
+   */
+  clickHandler(e) {
+    if (e && this.disabledFocusable) {
+      e.stopImmediatePropagation();
+      return;
+    }
+    this.press();
+    return true;
+  }
+  connectedCallback() {
+    super.connectedCallback();
+    this.elementInternals.ariaDisabled = `${!!this.disabledFocusable}`;
+    this.setTabIndex();
+    maybeSetAutoFocus(this);
+  }
+  constructor() {
+    super();
+    this.disabledFocusable = false;
+    this.elementInternals = this.attachInternals();
+    this.elementInternals.role = "button";
+  }
+  /**
+   * This fallback creates a new slot, then creates a submit button to mirror the custom element's
+   * properties. The submit button is then appended to the slot and the form is submitted.
+   *
+   * @internal
+   * @privateRemarks
+   * This is a workaround until {@link https://github.com/WICG/webcomponents/issues/814 | WICG/webcomponents/issues/814} is resolved.
+   */
+  createAndInsertFormSubmissionFallbackControl() {
+    const internalSlot = this.formSubmissionFallbackControlSlot ?? document.createElement("slot");
+    internalSlot.setAttribute("name", "internal");
+    this.shadowRoot?.appendChild(internalSlot);
+    this.formSubmissionFallbackControlSlot = internalSlot;
+    const fallbackControl = this.formSubmissionFallbackControl ?? document.createElement("button");
+    fallbackControl.style.display = "none";
+    fallbackControl.setAttribute("type", "submit");
+    fallbackControl.setAttribute("slot", "internal");
+    if (this.formNoValidate) {
+      fallbackControl.toggleAttribute("formnovalidate", true);
+    }
+    if (this.elementInternals.form?.id) {
+      fallbackControl.setAttribute("form", this.elementInternals.form.id);
+    }
+    if (this.name) {
+      fallbackControl.setAttribute("name", this.name);
+    }
+    if (this.value) {
+      fallbackControl.setAttribute("value", this.value);
+    }
+    if (this.formAction) {
+      fallbackControl.setAttribute("formaction", this.formAction ?? "");
+    }
+    if (this.formEnctype) {
+      fallbackControl.setAttribute("formenctype", this.formEnctype ?? "");
+    }
+    if (this.formMethod) {
+      fallbackControl.setAttribute("formmethod", this.formMethod ?? "");
+    }
+    if (this.formTarget) {
+      fallbackControl.setAttribute("formtarget", this.formTarget ?? "");
+    }
+    this.append(fallbackControl);
+    this.formSubmissionFallbackControl = fallbackControl;
+  }
+  /**
+   * Invoked when a connected component's form or fieldset has its disabled state changed.
+   *
+   * @param disabled - the disabled value of the form / fieldset
+   *
+   * @internal
+   */
+  formDisabledCallback(disabled) {
+    this.disabled = disabled;
+  }
+  /**
+   * Handles keypress events for the button.
+   *
+   * @param e - the keyboard event
+   * @returns - the return value of the click handler
+   * @public
+   */
+  keypressHandler(e) {
+    if (e && this.disabledFocusable) {
+      e.stopImmediatePropagation();
+      return;
+    }
+    if (e.key === "Enter" || e.key === " ") {
+      this.click();
+      return;
+    }
+    return true;
+  }
+  /**
+   * Presses the button.
+   *
+   * @public
+   */
+  press() {
+    switch (this.type) {
+      case ButtonType.reset: {
+        this.resetForm();
+        break;
+      }
+      case ButtonType.submit: {
+        this.submitForm();
+        break;
+      }
+    }
+  }
+  /**
+   * Resets the associated form.
+   *
+   * @public
+   */
+  resetForm() {
+    this.elementInternals.form?.reset();
+  }
+  /**
+   * Sets the `tabindex` attribute based on the disabled state of the button.
+   *
+   * @internal
+   */
+  setTabIndex() {
+    if (this.disabled) {
+      this.removeAttribute("tabindex");
+      return;
+    }
+    this.tabIndex = Number(this.getAttribute("tabindex") ?? 0) < 0 ? -1 : 0;
+  }
+  /**
+   * Submits the associated form.
+   *
+   * @internal
+   */
+  submitForm() {
+    if (!this.elementInternals.form || this.disabled || this.type !== ButtonType.submit) {
+      return;
+    }
+    if (!this.name && !this.formAction && !this.formEnctype && !this.formAttribute && !this.formMethod && !this.formNoValidate && !this.formTarget) {
+      this.elementInternals.form.requestSubmit();
+      return;
+    }
+    try {
+      this.elementInternals.setFormValue(this.value ?? "");
+      this.elementInternals.form.requestSubmit(this);
+    } catch (e) {
+      this.createAndInsertFormSubmissionFallbackControl();
+      this.elementInternals.setFormValue(null);
+      this.elementInternals.form.requestSubmit(this.formSubmissionFallbackControl);
+    }
+  }
+};
+__decorate([
+  observable
+], BaseButton.prototype, "defaultSlottedContent", void 0);
+__decorate([
+  attr({ mode: "boolean" })
+], BaseButton.prototype, "disabled", void 0);
+__decorate([
+  attr({ attribute: "disabled-focusable", mode: "boolean" })
+], BaseButton.prototype, "disabledFocusable", void 0);
+__decorate([
+  attr({ attribute: "formaction" })
+], BaseButton.prototype, "formAction", void 0);
+__decorate([
+  attr({ attribute: "form" })
+], BaseButton.prototype, "formAttribute", void 0);
+__decorate([
+  attr({ attribute: "formenctype" })
+], BaseButton.prototype, "formEnctype", void 0);
+__decorate([
+  attr({ attribute: "formmethod" })
+], BaseButton.prototype, "formMethod", void 0);
+__decorate([
+  attr({ attribute: "formnovalidate", mode: "boolean" })
+], BaseButton.prototype, "formNoValidate", void 0);
+__decorate([
+  attr({ attribute: "formtarget" })
+], BaseButton.prototype, "formTarget", void 0);
+__decorate([
+  attr
+], BaseButton.prototype, "name", void 0);
+__decorate([
+  attr
+], BaseButton.prototype, "type", void 0);
+__decorate([
+  attr
+], BaseButton.prototype, "value", void 0);
+
+// node_modules/@fluentui/web-components/dist/esm/button/button.js
+var Button = class extends BaseButton {
+  constructor() {
+    super(...arguments);
+    this.iconOnly = false;
+  }
+};
+__decorate([
+  attr
+], Button.prototype, "appearance", void 0);
+__decorate([
+  attr
+], Button.prototype, "shape", void 0);
+__decorate([
+  attr
+], Button.prototype, "size", void 0);
+__decorate([
+  attr({ attribute: "icon-only", mode: "boolean" })
+], Button.prototype, "iconOnly", void 0);
+applyMixins(Button, StartEnd);
+
+// node_modules/@fluentui/web-components/dist/esm/button/define.js
+Button.define(definition);
+
 // src/Wasm.FluentUIWebComponents/web/fluent.ts
 async function initializeFluent() {
-  setTheme(webLightTheme);
   await customElements.whenDefined("fluent-button");
   await document.fonts.ready;
   Updates.process();
 }
+
+// src/Wasm.FluentUIWebComponents/web/components/label.ts
+var styles2 = new CSSStyleSheet();
+styles2.replaceSync(`
+    :host {
+        display: block;
+        white-space: pre-wrap;
+        overflow-wrap: break-word;
+        line-height: 1.3;
+        color: var(--colorNeutralForeground1, inherit);
+    }
+`);
+var MauiLabel = class extends HTMLElement {
+  constructor() {
+    super();
+    const root = this.attachShadow({ mode: "open" });
+    root.adoptedStyleSheets = [styles2];
+    root.append(document.createElement("slot"));
+  }
+};
+
+// src/Wasm.FluentUIWebComponents/web/components/scroll-view.ts
+var styles3 = new CSSStyleSheet();
+styles3.replaceSync(`
+    :host {
+        display: block;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+`);
+var MauiScrollView = class extends HTMLElement {
+  constructor() {
+    super();
+    const root = this.attachShadow({ mode: "open" });
+    root.adoptedStyleSheets = [styles3];
+    root.append(document.createElement("slot"));
+  }
+};
+
+// src/Wasm.FluentUIWebComponents/web/components/define.ts
+customElements.define("maui-label", MauiLabel);
+customElements.define("maui-scroll-view", MauiScrollView);
 
 // src/Wasm.FluentUIWebComponents/web/maui-browser.ts
 var applicationActive = false;
@@ -6064,7 +6538,7 @@ async function startMaui(dotnet, mainAssembly, element = document.getElementById
     if (!element) {
       throw new Error("MAUI app element was not found");
     }
-    bridge = createBridge(element, getApi, onError);
+    bridge = new DomBrowserBridge(element, getApi, onError);
     await initializeFluent();
     const runtime = await dotnet.withMainAssembly(mainAssembly).create();
     runtime.setModuleImports("maui-browser", bridge.imports);
