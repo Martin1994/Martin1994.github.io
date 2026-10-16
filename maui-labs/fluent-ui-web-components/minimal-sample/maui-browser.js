@@ -3,7 +3,19 @@ function isRecord(value) {
   return typeof value === "object" && value !== null;
 }
 function assertBrowserExports(value) {
-  const methods = ["LayoutTick", "OnClick", "OnScroll", "RunScheduled", "OnSystemThemeChanged", "Shutdown"];
+  const methods = [
+    "LayoutTick",
+    "OnClick",
+    "OnScroll",
+    "RunScheduled",
+    "OnSystemThemeChanged",
+    "OnInput",
+    "OnInputFocus",
+    "OnInputSelection",
+    "OnInputCompleted",
+    "AnimationTick",
+    "Shutdown"
+  ];
   if (!isRecord(value) || !methods.every((name) => {
     return typeof value[name] === "function";
   })) {
@@ -102,11 +114,11 @@ var emptyArray = Object.freeze([]);
 function createTypeRegistry() {
   const typeToDefinition = /* @__PURE__ */ new Map();
   return Object.freeze({
-    register(definition2) {
-      if (typeToDefinition.has(definition2.type)) {
+    register(definition4) {
+      if (typeToDefinition.has(definition4.type)) {
         return false;
       }
-      typeToDefinition.set(definition2.type, definition2);
+      typeToDefinition.set(definition4.type, definition4);
       return true;
     },
     getByType(key) {
@@ -683,7 +695,7 @@ var defaultPolicy = Object.freeze({
   createHTML(value) {
     return fastTrustedType.createHTML(value);
   },
-  protect(tagName2, aspect, aspectName, sink) {
+  protect(tagName4, aspect, aspectName, sink) {
     return sink;
   }
 });
@@ -749,6 +761,20 @@ var booleanConverter = {
   fromView(value) {
     return !!value;
   }
+};
+function toNumber(value) {
+  if (value === null || value === void 0) {
+    return null;
+  }
+  const number = value * 1;
+  return isNaN(number) ? null : number;
+}
+var nullableNumberConverter = {
+  toView(value) {
+    const output = toNumber(value);
+    return output ? output.toString() : output;
+  },
+  fromView: toNumber
 };
 var AttributeDefinition = class _AttributeDefinition {
   /**
@@ -882,8 +908,8 @@ function attr(configOrTarget, prop) {
 
 // node_modules/@microsoft/fast-element/dist/esm/styles/element-styles.js
 var DefaultStyleStrategy;
-function reduceStyles(styles4) {
-  return styles4.reduce((reduced, current) => {
+function reduceStyles(styles5) {
+  return styles5.reduce((reduced, current) => {
     if (current instanceof ElementStyles) {
       reduced.push(...reduceStyles(current.styles));
     } else {
@@ -909,8 +935,8 @@ var ElementStyles = class _ElementStyles {
    * Creates an instance of ElementStyles.
    * @param styles - The styles that will be associated with elements.
    */
-  constructor(styles4) {
-    this.styles = styles4;
+  constructor(styles5) {
+    this.styles = styles5;
     this.targets = /* @__PURE__ */ new WeakSet();
     this._strategy = null;
   }
@@ -948,16 +974,16 @@ var ElementStyles = class _ElementStyles {
    * @param styles - The style options to normalize.
    * @returns A singular ElementStyles instance or undefined.
    */
-  static normalize(styles4) {
-    return styles4 === void 0 ? void 0 : Array.isArray(styles4) ? new _ElementStyles(styles4) : styles4 instanceof _ElementStyles ? styles4 : new _ElementStyles([styles4]);
+  static normalize(styles5) {
+    return styles5 === void 0 ? void 0 : Array.isArray(styles5) ? new _ElementStyles(styles5) : styles5 instanceof _ElementStyles ? styles5 : new _ElementStyles([styles5]);
   }
 };
 ElementStyles.supportsAdoptedStyleSheets = Array.isArray(document.adoptedStyleSheets) && "replace" in CSSStyleSheet.prototype;
 function createAdoptedSheetsStrategy() {
   const cache = /* @__PURE__ */ new Map();
   return class FallbackAdoptedSheetsStrategy {
-    constructor(styles4) {
-      this.sheets = styles4.map((x) => {
+    constructor(styles5) {
+      this.sheets = styles5.map((x) => {
         if (x instanceof CSSStyleSheet) {
           return x;
         }
@@ -983,8 +1009,8 @@ function createAdoptedSheetsStrategy() {
 var fallbackStyleId = 0;
 function createStyleElementStrategy() {
   return class FallbackStyleElementStrategy {
-    constructor(styles4) {
-      this.styles = styles4;
+    constructor(styles5) {
+      this.styles = styles5;
       this.styleClass = `fast-${++fallbackStyleId}`;
     }
     addStylesTo(target) {
@@ -998,9 +1024,9 @@ function createStyleElementStrategy() {
     }
     removeStylesFrom(target) {
       const t = target === document ? document.body : target;
-      const styles4 = t.querySelectorAll(`.${this.styleClass}`);
-      for (let i = 0, ii = styles4.length; i < ii; ++i) {
-        t.removeChild(styles4[i]);
+      const styles5 = t.querySelectorAll(`.${this.styleClass}`);
+      for (let i = 0, ii = styles5.length; i < ii; ++i) {
+        t.removeChild(styles5[i]);
       }
     }
   };
@@ -1013,15 +1039,15 @@ var typeRegistry = createTypeRegistry();
 var definitionInstances = /* @__PURE__ */ new WeakMap();
 var instanceRefs = /* @__PURE__ */ new WeakMap();
 var fastElementRegistry = Object.freeze({
-  register(definition2) {
-    if (!typeRegistry.register(definition2)) {
+  register(definition4) {
+    if (!typeRegistry.register(definition4)) {
       return false;
     }
-    const registeredTypes = getRegisteredTypes(definition2.registry);
-    if (!Object.prototype.hasOwnProperty.call(registeredTypes, definition2.name)) {
-      Observable.defineProperty(registeredTypes, definition2.name);
+    const registeredTypes = getRegisteredTypes(definition4.registry);
+    if (!Object.prototype.hasOwnProperty.call(registeredTypes, definition4.name)) {
+      Observable.defineProperty(registeredTypes, definition4.name);
     }
-    registeredTypes[definition2.name] = definition2.type;
+    registeredTypes[definition4.name] = definition4.type;
     return true;
   },
   getByType: typeRegistry.getByType,
@@ -1047,46 +1073,46 @@ function whenRegistered(name, registry3 = customElements) {
   if (!Object.prototype.hasOwnProperty.call(registeredTypes, name)) {
     Observable.defineProperty(registeredTypes, name);
   }
-  const definition2 = getDefinitionForType(registeredTypes[name]);
-  if (definition2 !== void 0) {
-    return Promise.resolve(definition2);
+  const definition4 = getDefinitionForType(registeredTypes[name]);
+  if (definition4 !== void 0) {
+    return Promise.resolve(definition4);
   }
   return new Promise((resolve) => {
     const notifier = Observable.getNotifier(registeredTypes);
     const subscriber = {
       handleChange: () => {
-        const definition3 = getDefinitionForType(registeredTypes[name]);
-        if (definition3 === void 0) {
+        const definition5 = getDefinitionForType(registeredTypes[name]);
+        if (definition5 === void 0) {
           return;
         }
         notifier.unsubscribe(subscriber, name);
-        resolve(definition3);
+        resolve(definition5);
       }
     };
     notifier.subscribe(subscriber, name);
   });
 }
-function trackFASTElementInstance(definition2, instance) {
+function trackFASTElementInstance(definition4, instance) {
   if (instanceRefs.has(instance)) {
     return false;
   }
-  let instances = definitionInstances.get(definition2);
+  let instances = definitionInstances.get(definition4);
   const isFirstInstance = instances === void 0;
   if (instances === void 0) {
     instances = /* @__PURE__ */ new Set();
-    definitionInstances.set(definition2, instances);
+    definitionInstances.set(definition4, instances);
   }
   const ref2 = new WeakRef(instance);
   instances.add(ref2);
   instanceRefs.set(instance, ref2);
   return isFirstInstance;
 }
-function trackedFASTElementInstances(definition2, callback) {
-  const instances = definitionInstances.get(definition2);
+function trackedFASTElementInstances(definition4, callback) {
+  const instances = definitionInstances.get(definition4);
   if (instances === void 0) {
     return;
   }
-  definitionInstances.delete(definition2);
+  definitionInstances.delete(definition4);
   for (const ref2 of instances) {
     const instance = ref2.deref();
     if (instance !== void 0) {
@@ -1110,23 +1136,23 @@ function isFASTElementTemplateResolver(value) {
 function isPromiseLike(value) {
   return typeof (value === null || value === void 0 ? void 0 : value.then) === "function";
 }
-function finalizeResolvedTemplate(definition2, template2) {
-  pendingTemplateResolutions.delete(definition2);
-  if (definition2.template === void 0 && template2 !== void 0) {
-    definition2.template = template2;
+function finalizeResolvedTemplate(definition4, template4) {
+  pendingTemplateResolutions.delete(definition4);
+  if (definition4.template === void 0 && template4 !== void 0) {
+    definition4.template = template4;
   }
-  if (definition2.template !== void 0) {
-    templateResolutionErrors.delete(definition2);
-    templateResolvers.delete(definition2);
-    return definition2.template;
+  if (definition4.template !== void 0) {
+    templateResolutionErrors.delete(definition4);
+    templateResolvers.delete(definition4);
+    return definition4.template;
   }
   return void 0;
 }
-function applyFASTElementExtensions(definition2, registry3 = definition2.registry, extensions) {
+function applyFASTElementExtensions(definition4, registry3 = definition4.registry, extensions) {
   if (!(extensions === null || extensions === void 0 ? void 0 : extensions.length)) {
     return;
   }
-  const typedDefinition = definition2;
+  const typedDefinition = definition4;
   let registries = extensionRegistries.get(typedDefinition);
   if (registries === null || registries === void 0 ? void 0 : registries.has(registry3)) {
     return;
@@ -1137,47 +1163,47 @@ function applyFASTElementExtensions(definition2, registry3 = definition2.registr
   }
   registries.add(registry3);
   for (const extension of extensions) {
-    extension(definition2);
+    extension(definition4);
   }
 }
-function getLateAttributeLookup(definition2) {
+function getLateAttributeLookup(definition4) {
   var _a2;
-  return (_a2 = lateAttributeLookups.get(definition2)) !== null && _a2 !== void 0 ? _a2 : null;
+  return (_a2 = lateAttributeLookups.get(definition4)) !== null && _a2 !== void 0 ? _a2 : null;
 }
-function resolveFASTElementTemplate(definition2) {
-  if (definition2.template !== void 0) {
-    templateResolutionErrors.delete(definition2);
-    return definition2.template;
+function resolveFASTElementTemplate(definition4) {
+  if (definition4.template !== void 0) {
+    templateResolutionErrors.delete(definition4);
+    return definition4.template;
   }
-  const pendingResolution = pendingTemplateResolutions.get(definition2);
+  const pendingResolution = pendingTemplateResolutions.get(definition4);
   if (pendingResolution) {
     return pendingResolution;
   }
-  const templateResolver = templateResolvers.get(definition2);
+  const templateResolver = templateResolvers.get(definition4);
   if (!templateResolver) {
     return void 0;
   }
-  templateResolutionErrors.delete(definition2);
-  let template2;
+  templateResolutionErrors.delete(definition4);
+  let template4;
   try {
-    template2 = templateResolver(definition2);
+    template4 = templateResolver(definition4);
   } catch (error) {
-    templateResolutionErrors.set(definition2, error);
+    templateResolutionErrors.set(definition4, error);
     throw error;
   }
-  if (isPromiseLike(template2)) {
-    const resolution = Promise.resolve(template2).then((resolvedTemplate) => finalizeResolvedTemplate(definition2, resolvedTemplate)).catch((error) => {
-      pendingTemplateResolutions.delete(definition2);
-      templateResolutionErrors.set(definition2, error);
+  if (isPromiseLike(template4)) {
+    const resolution = Promise.resolve(template4).then((resolvedTemplate) => finalizeResolvedTemplate(definition4, resolvedTemplate)).catch((error) => {
+      pendingTemplateResolutions.delete(definition4);
+      templateResolutionErrors.set(definition4, error);
       throw error;
     });
-    pendingTemplateResolutions.set(definition2, resolution);
+    pendingTemplateResolutions.set(definition4, resolution);
     return resolution;
   }
-  return finalizeResolvedTemplate(definition2, template2);
+  return finalizeResolvedTemplate(definition4, template4);
 }
-function setFASTElementTemplateError(definition2, error) {
-  const typedDefinition = definition2;
+function setFASTElementTemplateError(definition4, error) {
+  const typedDefinition = definition4;
   if (error === void 0) {
     templateResolutionErrors.delete(typedDefinition);
     return;
@@ -1243,8 +1269,8 @@ var FASTElementDefinition = class _FASTElementDefinition {
     if (!registry3.get(this.name)) {
       applyFASTElementExtensions(this, registry3, extensions);
       if (this.template === void 0 && templateResolvers.has(this)) {
-        void Promise.resolve().then(() => resolveFASTElementTemplate(this)).then((template2) => {
-          if (template2 !== void 0 && !registry3.get(this.name)) {
+        void Promise.resolve().then(() => resolveFASTElementTemplate(this)).then((template4) => {
+          if (template4 !== void 0 && !registry3.get(this.name)) {
             this.platformDefined = true;
             registry3.define(this.name, type, this.elementOptions);
           }
@@ -1266,9 +1292,9 @@ var FASTElementDefinition = class _FASTElementDefinition {
    * that describes the element to define.
    */
   static compose(type, nameOrDef) {
-    const definition2 = fastElementBaseTypes.has(type) || fastElementRegistry.getByType(type) ? new _FASTElementDefinition(class extends type {
+    const definition4 = fastElementBaseTypes.has(type) || fastElementRegistry.getByType(type) ? new _FASTElementDefinition(class extends type {
     }, nameOrDef) : new _FASTElementDefinition(type, nameOrDef);
-    return Promise.resolve(definition2);
+    return Promise.resolve(definition4);
   }
   /**
    * Registers a FASTElement base type.
@@ -1344,11 +1370,11 @@ var ElementController = class _ElementController {
   get template() {
     var _a2;
     if (this._template === null) {
-      const definition2 = this.definition;
+      const definition4 = this.definition;
       if (this.source.resolveTemplate) {
         this._template = this.source.resolveTemplate();
-      } else if (definition2.template) {
-        this._template = (_a2 = definition2.template) !== null && _a2 !== void 0 ? _a2 : null;
+      } else if (definition4.template) {
+        this._template = (_a2 = definition4.template) !== null && _a2 !== void 0 ? _a2 : null;
       }
     }
     return this._template;
@@ -1389,11 +1415,11 @@ var ElementController = class _ElementController {
   get mainStyles() {
     var _a2;
     if (this._mainStyles === null) {
-      const definition2 = this.definition;
+      const definition4 = this.definition;
       if (this.source.resolveStyles) {
         this._mainStyles = this.source.resolveStyles();
-      } else if (definition2.styles) {
-        this._mainStyles = (_a2 = definition2.styles) !== null && _a2 !== void 0 ? _a2 : null;
+      } else if (definition4.styles) {
+        this._mainStyles = (_a2 = definition4.styles) !== null && _a2 !== void 0 ? _a2 : null;
       }
     }
     return this._mainStyles;
@@ -1417,7 +1443,7 @@ var ElementController = class _ElementController {
    * controller in how to handle rendering and other platform integrations.
    * @internal
    */
-  constructor(element, definition2) {
+  constructor(element, definition4) {
     this.boundObservables = null;
     this.needsInitialization = true;
     this.hasExistingShadowRoot = false;
@@ -1437,8 +1463,8 @@ var ElementController = class _ElementController {
     this.view = null;
     this._notifier = new PropertyChangeNotifier(element);
     this.source = element;
-    this.definition = definition2;
-    this.shadowOptions = definition2.shadowOptions;
+    this.definition = definition4;
+    this.shadowOptions = definition4.shadowOptions;
     const prototype = Reflect.getPrototypeOf(element);
     const accessors = prototype === null ? [] : Observable.getAccessors(prototype);
     if (accessors.length > 0) {
@@ -1540,34 +1566,34 @@ var ElementController = class _ElementController {
    * Adds styles to this element. Providing an HTMLStyleElement will attach the element instance to the shadowRoot.
    * @param styles - The styles to add.
    */
-  addStyles(styles4) {
+  addStyles(styles5) {
     var _a2;
-    if (!styles4) {
+    if (!styles5) {
       return;
     }
     const source = this.source;
-    if (styles4 instanceof HTMLElement) {
+    if (styles5 instanceof HTMLElement) {
       const target = (_a2 = getShadowRoot(source)) !== null && _a2 !== void 0 ? _a2 : this.source;
-      target.append(styles4);
-    } else if (!styles4.isAttachedTo(source)) {
-      styles4.addStylesTo(source);
+      target.append(styles5);
+    } else if (!styles5.isAttachedTo(source)) {
+      styles5.addStylesTo(source);
     }
   }
   /**
    * Removes styles from this element. Providing an HTMLStyleElement will detach the element instance from the shadowRoot.
    * @param styles - the styles to remove.
    */
-  removeStyles(styles4) {
+  removeStyles(styles5) {
     var _a2;
-    if (!styles4) {
+    if (!styles5) {
       return;
     }
     const source = this.source;
-    if (styles4 instanceof HTMLElement) {
+    if (styles5 instanceof HTMLElement) {
       const target = (_a2 = getShadowRoot(source)) !== null && _a2 !== void 0 ? _a2 : source;
-      target.removeChild(styles4);
-    } else if (styles4.isAttachedTo(source)) {
-      styles4.removeStylesFrom(source);
+      target.removeChild(styles5);
+    } else if (styles5.isAttachedTo(source)) {
+      styles5.removeStylesFrom(source);
     }
   }
   /**
@@ -1769,7 +1795,7 @@ var ElementController = class _ElementController {
    * @remarks
    * If `null` is provided, any existing view will be removed.
    */
-  renderTemplate(template2) {
+  renderTemplate(template4) {
     var _a2;
     const element = this.source;
     const host = (_a2 = getShadowRoot(element)) !== null && _a2 !== void 0 ? _a2 : element;
@@ -1783,14 +1809,14 @@ var ElementController = class _ElementController {
         }
       }
     }
-    if (template2) {
+    if (template4) {
       const hasPrerenderedContent = this.hasExistingShadowRoot && this.needsInitialization;
       let didHydrate = false;
       if (hasPrerenderedContent && _ElementController.hydrationHook) {
-        didHydrate = _ElementController.hydrationHook(this, template2, element, host);
+        didHydrate = _ElementController.hydrationHook(this, template4, element, host);
       }
       if (!didHydrate) {
-        this.renderClientSide(template2, element, host);
+        this.renderClientSide(template4, element, host);
       }
       this._resolvePrerendered(hasPrerenderedContent);
       this._resolveHydrated(didHydrate);
@@ -1803,14 +1829,14 @@ var ElementController = class _ElementController {
    * Standard client-side render: clears any stale content, clones the
    * compiled fragment, binds, and appends to the host.
    */
-  renderClientSide(template2, element, host) {
+  renderClientSide(template4, element, host) {
     if (this.hasExistingShadowRoot) {
       for (let child = host.firstChild; child !== null; child = host.firstChild) {
         host.removeChild(child);
       }
       this.hasExistingShadowRoot = false;
     }
-    this.view = template2.render(element, host, element);
+    this.view = template4.render(element, host, element);
     this.view.sourceLifetime = SourceLifetime.coupled;
   }
   /**
@@ -1827,16 +1853,16 @@ var ElementController = class _ElementController {
     if (controller !== void 0 && !override) {
       return controller;
     }
-    const definition2 = FASTElementDefinition.getForInstance(element);
-    if (definition2 === void 0) {
+    const definition4 = FASTElementDefinition.getForInstance(element);
+    if (definition4 === void 0) {
       throw FAST.error(Message.missingElementDefinition);
     }
-    if (definition2.template === void 0 && trackFASTElementInstance(definition2, element)) {
-      const notifier = Observable.getNotifier(definition2);
+    if (definition4.template === void 0 && trackFASTElementInstance(definition4, element)) {
+      const notifier = Observable.getNotifier(definition4);
       const subscriber = {
         handleChange: () => {
           notifier.unsubscribe(subscriber, "template");
-          trackedFASTElementInstances(definition2, (tracked) => {
+          trackedFASTElementInstances(definition4, (tracked) => {
             const trackedElement = tracked;
             _ElementController.forCustomElement(trackedElement, true);
             if (trackedElement.isConnected) {
@@ -1847,7 +1873,7 @@ var ElementController = class _ElementController {
       };
       notifier.subscribe(subscriber, "template");
     }
-    return element.$fastController = new elementControllerStrategy(element, definition2);
+    return element.$fastController = new elementControllerStrategy(element, definition4);
   }
   /**
    * Sets the strategy that ElementController.forCustomElement uses to construct
@@ -1877,9 +1903,9 @@ function normalizeStyleTarget(target) {
   }
 }
 var AdoptedStyleSheetsStrategy = class _AdoptedStyleSheetsStrategy {
-  constructor(styles4) {
+  constructor(styles5) {
     const styleSheetCache = _AdoptedStyleSheetsStrategy.styleSheetCache;
-    this.sheets = styles4.map((x) => {
+    this.sheets = styles5.map((x) => {
       if (x instanceof CSSStyleSheet) {
         return x;
       }
@@ -1906,26 +1932,26 @@ function usableStyleTarget(target) {
   return target === document ? document.body : target;
 }
 var StyleElementStrategy = class {
-  constructor(styles4) {
-    this.styles = styles4;
+  constructor(styles5) {
+    this.styles = styles5;
     this.styleClass = nextStyleId();
   }
   addStylesTo(target) {
     target = usableStyleTarget(normalizeStyleTarget(target));
-    const styles4 = this.styles;
+    const styles5 = this.styles;
     const styleClass = this.styleClass;
-    for (let i = 0; i < styles4.length; i++) {
+    for (let i = 0; i < styles5.length; i++) {
       const element = document.createElement("style");
-      element.innerHTML = styles4[i];
+      element.innerHTML = styles5[i];
       element.className = styleClass;
       target.append(element);
     }
   }
   removeStylesFrom(target) {
     target = usableStyleTarget(normalizeStyleTarget(target));
-    const styles4 = target.querySelectorAll(`.${this.styleClass}`);
-    for (let i = 0, ii = styles4.length; i < ii; ++i) {
-      target.removeChild(styles4[i]);
+    const styles5 = target.querySelectorAll(`.${this.styleClass}`);
+    for (let i = 0, ii = styles5.length; i < ii; ++i) {
+      target.removeChild(styles5[i]);
     }
   }
 };
@@ -1991,9 +2017,9 @@ function define(type, nameOrDef, extensions) {
   const composePromise = isFunction(type) ? FASTElementDefinition.compose(type, nameOrDef) : FASTElementDefinition.compose(this, type);
   return composePromise.then((def) => {
     applyFASTElementExtensions(def, def.registry, extensions);
-    const template2 = resolveFASTElementTemplate(def);
-    if (isPromiseLike2(template2)) {
-      return template2.then(() => def.define().type);
+    const template4 = resolveFASTElementTemplate(def);
+    if (isPromiseLike2(template4)) {
+      return template4.then(() => def.define().type);
     }
     return def.define().type;
   });
@@ -2042,7 +2068,7 @@ var CSSDirective = Object.freeze({
 
 // node_modules/@microsoft/fast-element/dist/esm/styles/css.js
 function collectStyles(strings, values) {
-  const styles4 = [];
+  const styles5 = [];
   let cssString = "";
   for (let i = 0, ii = strings.length - 1; i < ii; ++i) {
     cssString += strings[i];
@@ -2052,26 +2078,26 @@ function collectStyles(strings, values) {
     }
     if (value instanceof ElementStyles || value instanceof CSSStyleSheet) {
       if (cssString.trim() !== "") {
-        styles4.push(cssString);
+        styles5.push(cssString);
         cssString = "";
       }
-      styles4.push(value);
+      styles5.push(value);
     } else {
       cssString += value;
     }
   }
   cssString += strings[strings.length - 1];
   if (cssString.trim() !== "") {
-    styles4.push(cssString);
+    styles5.push(cssString);
   }
-  return styles4;
+  return styles5;
 }
 var css = ((strings, ...values) => {
   return new ElementStyles(collectStyles(strings, values));
 });
 var CSSPartial = class {
-  constructor(styles4) {
-    this.value = styles4.length === 0 ? "" : styles4.length === 1 ? styles4[0] : new ElementStyles(styles4);
+  constructor(styles5) {
+    this.value = styles5.length === 0 ? "" : styles5.length === 1 ? styles5[0] : new ElementStyles(styles5);
   }
   createCSS() {
     return this.value;
@@ -3315,7 +3341,7 @@ var CompilationContext = class {
     this.descriptors = {};
     this.factories = [];
   }
-  addFactory(factory, parentId, nodeId, targetIndex, tagName2) {
+  addFactory(factory, parentId, nodeId, targetIndex, tagName4) {
     var _a2, _b;
     if (!this.nodeIds.has(nodeId)) {
       this.nodeIds.add(nodeId);
@@ -3323,7 +3349,7 @@ var CompilationContext = class {
     }
     factory.id = (_a2 = factory.id) !== null && _a2 !== void 0 ? _a2 : nextId();
     factory.targetNodeId = nodeId;
-    factory.targetTagName = tagName2;
+    factory.targetTagName = tagName4;
     factory.policy = (_b = factory.policy) !== null && _b !== void 0 ? _b : this.policy;
     this.factories.push(factory);
   }
@@ -3482,26 +3508,26 @@ var Compiler = {
    * @public
    */
   compile(html2, factories, policy = DOM.policy) {
-    let template2;
+    let template4;
     if (isString(html2)) {
-      template2 = document.createElement(templateTag);
-      template2.innerHTML = policy.createHTML(html2);
-      const fec = template2.content.firstElementChild;
+      template4 = document.createElement(templateTag);
+      template4.innerHTML = policy.createHTML(html2);
+      const fec = template4.content.firstElementChild;
       if (fec !== null && fec.tagName === templateTag) {
-        template2 = fec;
+        template4 = fec;
       }
     } else {
-      template2 = html2;
+      template4 = html2;
     }
-    if (!template2.content.firstChild && !template2.content.lastChild) {
-      template2.content.appendChild(document.createComment(""));
+    if (!template4.content.firstChild && !template4.content.lastChild) {
+      template4.content.appendChild(document.createComment(""));
     }
-    const fragment = document.adoptNode(template2.content);
+    const fragment = document.adoptNode(template4.content);
     const context = new CompilationContext(fragment, factories, policy);
     compileAttributes(
       context,
       "",
-      template2,
+      template4,
       /* host */
       "h",
       0,
@@ -3615,8 +3641,8 @@ var InlineTemplateDirective = class {
 };
 InlineTemplateDirective.empty = new InlineTemplateDirective("");
 HTMLDirective.define(InlineTemplateDirective);
-function createHTML2(value, prevString, add, definition2 = HTMLDirective.getForInstance(value)) {
-  if (definition2.aspected) {
+function createHTML2(value, prevString, add, definition4 = HTMLDirective.getForInstance(value)) {
+  if (definition4.aspected) {
     const match = lastAttributeNameRegex.exec(prevString);
     if (match !== null) {
       HTMLDirective.assignAspect(value, match[2]);
@@ -3733,17 +3759,17 @@ var ViewTemplate = class _ViewTemplate {
     for (let i = 0, ii = strings.length - 1; i < ii; ++i) {
       const currentString = strings[i];
       let currentValue = values[i];
-      let definition2;
+      let definition4;
       html2 += currentString;
       if (isFunction(currentValue)) {
         currentValue = new HTMLBindingDirective(oneWay(currentValue));
       } else if (currentValue instanceof Binding) {
         currentValue = new HTMLBindingDirective(currentValue);
-      } else if (!(definition2 = HTMLDirective.getForInstance(currentValue))) {
+      } else if (!(definition4 = HTMLDirective.getForInstance(currentValue))) {
         const staticValue = currentValue;
         currentValue = new HTMLBindingDirective(oneTime(() => staticValue));
       }
-      html2 += createHTML2(currentValue, currentString, add, definition2);
+      html2 += createHTML2(currentValue, currentString, add, definition4);
     }
     return new _ViewTemplate(html2 + strings[strings.length - 1], factories, policy);
   }
@@ -5442,6 +5468,665 @@ var BrowserTheme = class {
   }
 };
 
+// node_modules/tslib/tslib.es6.mjs
+function __decorate(decorators, target, key, desc) {
+  var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+  if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+  else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+  return c > 3 && r && Object.defineProperty(target, key, r), r;
+}
+
+// node_modules/@fluentui/web-components/dist/esm/utils/template-helpers.js
+function staticallyCompose(item) {
+  if (!item) {
+    return InlineTemplateDirective.empty;
+  }
+  if (typeof item === "string") {
+    return new InlineTemplateDirective(item);
+  }
+  if ("inline" in item) {
+    return item.inline();
+  }
+  return item;
+}
+
+// node_modules/@fluentui/web-components/dist/esm/patterns/start-end.js
+var StartEnd = class {
+};
+function endSlotTemplate(options) {
+  return html` <slot name="end" ${ref("end")}>${staticallyCompose(options.end)}</slot> `.inline();
+}
+function startSlotTemplate(options) {
+  return html` <slot name="start" ${ref("start")}>${staticallyCompose(options.start)}</slot> `.inline();
+}
+
+// node_modules/@fluentui/web-components/dist/esm/utils/apply-mixins.js
+function applyMixins(derivedCtor, ...baseCtors) {
+  const derivedAttributes = AttributeConfiguration.locate(derivedCtor);
+  baseCtors.forEach((baseCtor) => {
+    Object.getOwnPropertyNames(baseCtor.prototype).forEach((name) => {
+      if (name !== "constructor") {
+        Object.defineProperty(
+          derivedCtor.prototype,
+          name,
+          /* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */
+          Object.getOwnPropertyDescriptor(baseCtor.prototype, name)
+        );
+      }
+    });
+    const baseAttributes = AttributeConfiguration.locate(baseCtor);
+    baseAttributes.forEach((x) => derivedAttributes.push(x));
+  });
+}
+
+// node_modules/@fluentui/web-components/dist/esm/utils/autofocus.js
+function maybeSetAutoFocus(element) {
+  const doc = element.ownerDocument;
+  if (element?.isConnected && element?.hasAttribute("autofocus") && // Note: opacity=0 is considered visible based on the native `autofocus` implementation
+  element?.checkVisibility?.({ contentVisibilityAuto: true, visibilityProperty: true }) && [null, element, doc.body, doc.documentElement].includes(doc.activeElement)) {
+    Updates.enqueue(() => {
+      element.focus();
+    });
+  }
+}
+
+// node_modules/@fluentui/web-components/dist/esm/fluent-design-system.js
+var FluentDesignSystem = Object.freeze({
+  prefix: "fluent",
+  shadowRootMode: "open",
+  registry: globalThis.customElements
+});
+
+// node_modules/@fluentui/web-components/dist/esm/text-input/text-input.options.js
+var TextInputType = {
+  email: "email",
+  password: "password",
+  tel: "tel",
+  text: "text",
+  url: "url"
+};
+var ImplicitSubmissionBlockingTypes = [
+  "date",
+  "datetime-local",
+  "email",
+  "month",
+  "number",
+  "password",
+  "search",
+  "tel",
+  "text",
+  "time",
+  "url",
+  "week"
+];
+var tagName = `${FluentDesignSystem.prefix}-text-input`;
+
+// node_modules/@fluentui/web-components/dist/esm/text-input/text-input.base.js
+var BaseTextInput = class extends FASTElement {
+  constructor() {
+    super(...arguments);
+    this.type = TextInputType.text;
+    this.dirtyValue = false;
+    this.elementInternals = this.attachInternals();
+  }
+  /**
+   * Tracks the current value of the input.
+   *
+   * @param prev - the previous value
+   * @param next - the next value
+   *
+   * @internal
+   */
+  currentValueChanged(prev, next2) {
+    this.value = next2;
+  }
+  /**
+   * Updates the control label visibility based on the presence of default slotted content.
+   *
+   * @internal
+   */
+  defaultSlottedNodesChanged(prev, next2) {
+    Updates.enqueue(() => {
+      if (this.controlLabel) {
+        this.controlLabel.hidden = !next2?.some((node) => node.nodeType === Node.ELEMENT_NODE || node.nodeType === Node.TEXT_NODE && !!node.textContent?.trim());
+      }
+    });
+  }
+  /**
+   * Sets the value of the element to the initial value.
+   *
+   * @internal
+   */
+  initialValueChanged() {
+    if (!this.dirtyValue) {
+      this.value = this.initialValue;
+    }
+  }
+  /**
+   * Syncs the `ElementInternals.ariaReadOnly` property when the `readonly` property changes.
+   *
+   * @internal
+   */
+  readOnlyChanged() {
+    if (this.$fastController.isConnected) {
+      this.elementInternals.ariaReadOnly = `${!!this.readOnly}`;
+    }
+  }
+  /**
+   * Syncs the element's internal `aria-required` state with the `required` attribute.
+   *
+   * @param previous - the previous required state
+   * @param next - the current required state
+   *
+   * @internal
+   */
+  requiredChanged(previous, next2) {
+    if (this.$fastController.isConnected) {
+      this.elementInternals.ariaRequired = `${!!next2}`;
+    }
+  }
+  /**
+   * Calls the `setValidity` method when the control reference changes.
+   *
+   * @param prev - the previous control reference
+   * @param next - the current control reference
+   *
+   * @internal
+   */
+  controlChanged(prev, next2) {
+    Updates.enqueue(() => {
+      if (this.$fastController.isConnected) {
+        this.setValidity();
+      }
+    });
+  }
+  static {
+    this.formAssociated = true;
+  }
+  /**
+   * The element's validity state.
+   *
+   * @public
+   * @remarks
+   * Reflects the {@link https://developer.mozilla.org/docs/Web/API/ElementInternals/validity | `ElementInternals.validity`} property.
+   */
+  get validity() {
+    return this.elementInternals.validity;
+  }
+  /**
+   * The validation message.
+   *
+   * @public
+   * @remarks
+   * Reflects the {@link https://developer.mozilla.org/docs/Web/API/ElementInternals/validationMessage | `ElementInternals.validationMessage`} property.
+   */
+  get validationMessage() {
+    return this.elementInternals.validationMessage || this.control.validationMessage;
+  }
+  /**
+   * The current value of the input.
+   * @public
+   */
+  get value() {
+    Observable.track(this, "value");
+    return this.currentValue;
+  }
+  set value(value) {
+    this.currentValue = value;
+    if (this.elementInternals && this.control) {
+      this.control.value = value ?? "";
+      this.setFormValue(value);
+      this.setValidity();
+      Observable.notify(this, "value");
+    }
+  }
+  /**
+   * Determines if the control can be submitted for constraint validation.
+   *
+   * @public
+   * @remarks
+   * Reflects the {@link https://developer.mozilla.org/docs/Web/API/ElementInternals/willValidate | `ElementInternals.willValidate`} property.
+   */
+  get willValidate() {
+    return this.elementInternals.willValidate;
+  }
+  /**
+   * The associated form element.
+   *
+   * @public
+   * @remarks
+   * Reflects the {@link https://developer.mozilla.org/docs/Web/API/ElementInternals/form | `ElementInternals.form`} property.
+   */
+  get form() {
+    return this.elementInternals.form;
+  }
+  /**
+   * Change event handler for inner control.
+   *
+   * @internal
+   * @privateRemarks
+   * "Change" events are not `composable` so they will not permeate the shadow DOM boundary. This function effectively
+   * proxies the change event, emitting a `change` event whenever the internal control emits a `change` event.
+   */
+  changeHandler(e) {
+    this.setValidity();
+    this.$emit("change", e, {
+      bubbles: true,
+      composed: true
+    });
+    return true;
+  }
+  /**
+   * Checks the validity of the element and returns the result.
+   *
+   * @public
+   * @remarks
+   * Reflects the {@link https://developer.mozilla.org/docs/Web/API/ElementInternals/checkValidity | `HTMLInputElement.checkValidity()`} method.
+   */
+  checkValidity() {
+    return this.elementInternals.checkValidity();
+  }
+  /**
+   * Clicks the inner control when the component is clicked.
+   *
+   * @param e - the event object
+   */
+  clickHandler(e) {
+    if (e.target === this) {
+      this.control?.click();
+    }
+    return true;
+  }
+  connectedCallback() {
+    super.connectedCallback();
+    this.setFormValue(this.value);
+    this.setValidity();
+    maybeSetAutoFocus(this);
+  }
+  /**
+   * Resets the value to its initial value when the form is reset.
+   *
+   * @internal
+   */
+  formResetCallback() {
+    this.value = this.initialValue;
+    this.dirtyValue = false;
+  }
+  /**
+   * Handles implicit form submission when the user presses the "Enter" key.
+   *
+   * @internal
+   */
+  implicitSubmit() {
+    if (!this.elementInternals.form) {
+      return;
+    }
+    if (this.elementInternals.form.elements.length === 1) {
+      this.elementInternals.form.requestSubmit();
+      return;
+    }
+    const formElements = [...this.elementInternals.form.elements];
+    const submitButton = formElements.find((x) => x.getAttribute("type") === "submit");
+    if (submitButton) {
+      submitButton.click();
+      return;
+    }
+    const filteredElements = formElements.filter((x) => ImplicitSubmissionBlockingTypes.includes(x.getAttribute("type") ?? ""));
+    if (filteredElements.length > 1) {
+      return;
+    }
+    this.elementInternals.form.requestSubmit();
+  }
+  /**
+   * Handles the internal control's `input` event.
+   *
+   * @internal
+   */
+  inputHandler(e) {
+    this.dirtyValue = true;
+    this.value = this.control.value;
+    return true;
+  }
+  /**
+   * Handles the internal control's `keydown` event.
+   *
+   * @param e - the event object
+   * @internal
+   */
+  keydownHandler(e) {
+    if (e.key === "Enter") {
+      this.implicitSubmit();
+    }
+    return true;
+  }
+  /**
+   * Selects all the text in the text field.
+   *
+   * @public
+   * @privateRemarks
+   * The `select` event does not permeate the shadow DOM boundary. This function effectively proxies the event,
+   * emitting a `select` event whenever the internal control emits a `select` event
+   *
+   */
+  select() {
+    this.control.select();
+    this.$emit("select");
+  }
+  /**
+   * Sets the custom validity message.
+   * @param message - The message to set
+   *
+   * @public
+   */
+  setCustomValidity(message) {
+    this.elementInternals.setValidity({ customError: true }, message);
+    this.reportValidity();
+  }
+  /**
+   * Reports the validity of the element.
+   *
+   * @public
+   * @remarks
+   * Reflects the {@link https://developer.mozilla.org/docs/Web/API/ElementInternals/reportValidity | `HTMLInputElement.reportValidity()`} method.
+   */
+  reportValidity() {
+    return this.elementInternals.reportValidity();
+  }
+  /**
+   * Reflects the {@link https://developer.mozilla.org/docs/Web/API/ElementInternals/setFormValue | `ElementInternals.setFormValue()`} method.
+   *
+   * @internal
+   */
+  setFormValue(value, state) {
+    this.elementInternals?.setFormValue(value, value ?? state);
+  }
+  /**
+   * Sets the validity of the control.
+   *
+   * @param flags - Validity flags. If not provided, the control's `validity` will be used.
+   * @param message - Optional message to supply. If not provided, the control's `validationMessage` will be used. If the control does not have a `validationMessage`, the message will be empty.
+   * @param anchor - Optional anchor to use for the validation message. If not provided, the control will be used.
+   *
+   * @internal
+   */
+  setValidity(flags, message, anchor2) {
+    if (this.elementInternals && this.control) {
+      if (this.disabled) {
+        this.elementInternals.setValidity({});
+        return;
+      }
+      this.elementInternals.setValidity(flags ?? this.control.validity, message ?? this.validationMessage, anchor2 ?? this.control);
+    }
+  }
+};
+__decorate([
+  attr
+], BaseTextInput.prototype, "autocomplete", void 0);
+__decorate([
+  attr({ attribute: "current-value" })
+], BaseTextInput.prototype, "currentValue", void 0);
+__decorate([
+  observable
+], BaseTextInput.prototype, "defaultSlottedNodes", void 0);
+__decorate([
+  attr
+], BaseTextInput.prototype, "dirname", void 0);
+__decorate([
+  attr({ mode: "boolean" })
+], BaseTextInput.prototype, "disabled", void 0);
+__decorate([
+  attr({ attribute: "form" })
+], BaseTextInput.prototype, "formAttribute", void 0);
+__decorate([
+  attr({ attribute: "value", mode: "fromView" })
+], BaseTextInput.prototype, "initialValue", void 0);
+__decorate([
+  attr
+], BaseTextInput.prototype, "list", void 0);
+__decorate([
+  attr({ converter: nullableNumberConverter })
+], BaseTextInput.prototype, "maxlength", void 0);
+__decorate([
+  attr({ converter: nullableNumberConverter })
+], BaseTextInput.prototype, "minlength", void 0);
+__decorate([
+  attr({ mode: "boolean" })
+], BaseTextInput.prototype, "multiple", void 0);
+__decorate([
+  attr
+], BaseTextInput.prototype, "name", void 0);
+__decorate([
+  attr
+], BaseTextInput.prototype, "pattern", void 0);
+__decorate([
+  attr
+], BaseTextInput.prototype, "placeholder", void 0);
+__decorate([
+  attr({ attribute: "readonly", mode: "boolean" })
+], BaseTextInput.prototype, "readOnly", void 0);
+__decorate([
+  attr({ mode: "boolean" })
+], BaseTextInput.prototype, "required", void 0);
+__decorate([
+  attr({ converter: nullableNumberConverter })
+], BaseTextInput.prototype, "size", void 0);
+__decorate([
+  attr({
+    converter: {
+      fromView: (value) => typeof value === "string" ? ["true", ""].includes(value.trim().toLowerCase()) : null,
+      toView: (value) => value.toString()
+    }
+  })
+], BaseTextInput.prototype, "spellcheck", void 0);
+__decorate([
+  attr
+], BaseTextInput.prototype, "type", void 0);
+__decorate([
+  observable
+], BaseTextInput.prototype, "control", void 0);
+__decorate([
+  observable
+], BaseTextInput.prototype, "controlLabel", void 0);
+
+// node_modules/@fluentui/web-components/dist/esm/text-input/text-input.js
+var TextInput = class extends BaseTextInput {
+};
+__decorate([
+  attr
+], TextInput.prototype, "appearance", void 0);
+__decorate([
+  attr({ attribute: "control-size" })
+], TextInput.prototype, "controlSize", void 0);
+applyMixins(TextInput, StartEnd);
+
+// src/Wasm.FluentUIWebComponents/web/input.ts
+var BrowserTextInput = class {
+  #host;
+  #abort = new AbortController();
+  #callbacks;
+  #composing = false;
+  #pendingValue;
+  #selection;
+  #attributes = /* @__PURE__ */ new Map();
+  #lastText;
+  #lastSelection = "";
+  #disposed = false;
+  constructor(host, callbacks) {
+    if (!(host instanceof TextInput) || !host.shadowRoot) {
+      throw new Error("Expected a registered Fluent text-input");
+    }
+    this.#host = host;
+    this.#callbacks = callbacks;
+    host.setAttribute("data-maui-input", "");
+    const options = { signal: this.#abort.signal };
+    host.addEventListener("compositionstart", () => {
+      this.#composing = true;
+    }, options);
+    host.addEventListener("compositionend", () => {
+      this.#composing = false;
+      if (this.#pendingValue !== void 0) {
+        const value = this.#pendingValue;
+        this.#pendingValue = void 0;
+        this.setValue(value);
+      }
+      this.flush();
+      this.#input();
+    }, options);
+    host.addEventListener("input", this.#input, options);
+    host.addEventListener("focusin", () => {
+      this.#callbacks.onFocus(true);
+      this.#publishSelection();
+    }, options);
+    host.addEventListener("focusout", (event) => {
+      const next2 = event.relatedTarget;
+      if (!(next2 instanceof Node) || !host.shadowRoot?.contains(next2)) {
+        this.#callbacks.onFocus(false);
+      }
+    }, options);
+    host.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter") {
+        return;
+      }
+      if (this.#composing || event.isComposing || event.keyCode === 229) {
+        event.stopPropagation();
+        return;
+      }
+      this.#callbacks.onCompleted();
+    }, { ...options, capture: true });
+    for (const name of ["selectionchange", "select", "keyup", "pointerup"]) {
+      host.shadowRoot.addEventListener(name, this.#publishSelection, { ...options, capture: true });
+    }
+  }
+  #control() {
+    return this.#host.shadowRoot?.querySelector('input[part~="control"]') ?? null;
+  }
+  flush() {
+    Updates.process();
+    const input = this.#control();
+    if (input) {
+      for (const [name, value] of this.#attributes) {
+        if (value === null && input.hasAttribute(name)) {
+          input.removeAttribute(name);
+        } else if (value !== null && input.getAttribute(name) !== value) {
+          input.setAttribute(name, value);
+        }
+      }
+    }
+    if (!this.#composing && this.#selection) {
+      const control = this.#control();
+      if (control && control.selectionStart !== null) {
+        const { start, length } = this.#selection;
+        this.#selection = void 0;
+        const end = Math.min(control.value.length, start + length);
+        const position = Math.min(start, end);
+        if (control.selectionStart !== position || control.selectionEnd !== end) {
+          control.setSelectionRange(position, end);
+        }
+      }
+    }
+  }
+  setValue(value) {
+    if (this.#composing) {
+      this.#pendingValue = value;
+      return;
+    }
+    if ((this.#host.value ?? "") !== value) {
+      this.#host.value = value;
+      this.#notifySelection(false);
+    }
+    this.#lastText = value;
+  }
+  setAttribute(name, value) {
+    this.#attributes.set(name, value);
+    this.flush();
+  }
+  setSelection(start, length) {
+    if (!Number.isInteger(start) || !Number.isInteger(length) || start < 0 || length < 0) {
+      throw new Error("Invalid input selection");
+    }
+    this.#selection = { start, length };
+    this.flush();
+  }
+  focus(focused) {
+    this.flush();
+    const control = this.#control();
+    if (!control || !this.#host.isConnected) {
+      return false;
+    }
+    if (focused) {
+      this.#host.focus();
+    } else {
+      control.blur();
+    }
+    return this.#host.shadowRoot?.activeElement === control;
+  }
+  #input = () => {
+    if (this.#composing || this.#disposed) {
+      return;
+    }
+    const control = this.#control();
+    if (!control) {
+      return;
+    }
+    const start = control.selectionStart ?? 0;
+    const length = (control.selectionEnd ?? start) - start;
+    if (control.value !== this.#lastText) {
+      this.#lastText = control.value;
+      this.#callbacks.onText({ value: control.value, start, length });
+    }
+    this.#publishSelection();
+  };
+  #publishSelection = () => {
+    this.#notifySelection(true);
+  };
+  #notifySelection(requireFocus) {
+    if (this.#disposed || this.#composing) {
+      return;
+    }
+    const control = this.#control();
+    if (!control || requireFocus && this.#host.shadowRoot?.activeElement !== control) {
+      return;
+    }
+    const start = control.selectionStart ?? 0;
+    const length = (control.selectionEnd ?? start) - start;
+    const key = `${start}:${length}`;
+    if (key !== this.#lastSelection) {
+      this.#lastSelection = key;
+      this.#callbacks.onSelection({ start, length });
+    }
+  }
+  dispose() {
+    this.#disposed = true;
+    this.#abort.abort();
+    this.#pendingValue = void 0;
+    this.#selection = void 0;
+    this.#host.removeAttribute("data-maui-input");
+  }
+};
+
+// src/Wasm.FluentUIWebComponents/web/input.styles.ts
+function createInputStyles() {
+  const style = document.createElement("style");
+  style.textContent = `
+        fluent-text-input[data-maui-input]::part(control) {
+            font: inherit;
+            text-align: inherit;
+            letter-spacing: inherit;
+        }
+        fluent-text-input[data-maui-input][data-maui-input-color]::part(control) {
+            color: var(--maui-input-color);
+        }
+        fluent-text-input[data-maui-input][data-maui-placeholder-color]::part(control)::placeholder {
+            color: var(--maui-placeholder-color);
+        }
+        fluent-text-input[data-maui-input]::part(root) {
+            min-height: 32px;
+            height: 100%;
+        }
+    `;
+  return style;
+}
+
 // src/Wasm.FluentUIWebComponents/web/bridge.ts
 var DomBrowserBridge = class {
   imports;
@@ -5453,11 +6138,17 @@ var DomBrowserBridge = class {
   #clicks = /* @__PURE__ */ new Map();
   #scrolls = /* @__PURE__ */ new Map();
   #timers = /* @__PURE__ */ new Map();
+  #inputs = /* @__PURE__ */ new Map();
+  #inputStyles;
   #sequence = 0;
   #observer;
   #mountedId = 0;
   #frameId = 0;
   #stopped = false;
+  #tickerFrame = 0;
+  #tickerRunning = false;
+  #lastTick;
+  #tickInterval = 1e3 / 60;
   constructor(viewport, getApi, onError) {
     this.#viewport = viewport;
     this.#getApi = getApi;
@@ -5468,6 +6159,21 @@ var DomBrowserBridge = class {
       });
     });
     this.imports = {
+      startTicker: this.#startTicker.bind(this),
+      stopTicker: this.#stopTicker.bind(this),
+      subscribeInput: this.#subscribeInput.bind(this),
+      inputValue: (id3, value) => {
+        this.#input(id3).setValue(value);
+      },
+      inputSelection: (id3, start, length) => {
+        this.#input(id3).setSelection(start, length);
+      },
+      inputAttribute: (id3, name, value) => {
+        this.#input(id3).setAttribute(name, value);
+      },
+      inputFocus: (id3, focused) => {
+        return this.#input(id3).focus(focused);
+      },
       report: this.#report.bind(this),
       getSystemTheme: this.#theme.getSystemTheme.bind(this.#theme),
       getThemeColor: this.#theme.getColor.bind(this.#theme),
@@ -5502,6 +6208,76 @@ var DomBrowserBridge = class {
       throw new Error(`Stale MAUI element handle: ${id3}`);
     }
     return element;
+  }
+  #input(id3) {
+    this.#get(id3);
+    const input = this.#inputs.get(id3);
+    if (!input) {
+      throw new Error(`Input is not subscribed: ${id3}`);
+    }
+    return input;
+  }
+  #startTicker(maxFps) {
+    if (this.#stopped || !Number.isInteger(maxFps) || maxFps <= 0) {
+      throw new Error("Invalid or stopped animation ticker");
+    }
+    this.#stopTicker();
+    this.#tickerRunning = true;
+    this.#tickInterval = 1e3 / maxFps;
+    this.#tickerFrame = requestAnimationFrame(this.#tick);
+  }
+  #tick = (timestamp) => {
+    this.#tickerFrame = 0;
+    if (!this.#tickerRunning || this.#stopped) {
+      return;
+    }
+    if (this.#lastTick === void 0 || timestamp - this.#lastTick >= this.#tickInterval - 0.5) {
+      this.#lastTick = timestamp;
+      this.#invoke(() => {
+        this.#getApi().AnimationTick();
+      });
+    }
+    if (this.#tickerRunning && !this.#tickerFrame) {
+      this.#tickerFrame = requestAnimationFrame(this.#tick);
+    }
+  };
+  #stopTicker() {
+    this.#tickerRunning = false;
+    cancelAnimationFrame(this.#tickerFrame);
+    this.#tickerFrame = 0;
+    this.#lastTick = void 0;
+  }
+  #subscribeInput(id3) {
+    if (this.#stopped || this.#inputs.has(id3)) {
+      throw new Error("Input subscription is stopped or duplicated");
+    }
+    const input = new BrowserTextInput(this.#get(id3), {
+      onText: ({ value, start, length }) => {
+        this.#invoke(() => {
+          this.#getApi().OnInput(id3, value, start, length);
+        });
+      },
+      onFocus: (focused) => {
+        this.#invoke(() => {
+          this.#getApi().OnInputFocus(id3, focused);
+        });
+      },
+      onSelection: ({ start, length }) => {
+        this.#invoke(() => {
+          this.#getApi().OnInputSelection(id3, start, length);
+        });
+      },
+      onCompleted: () => {
+        this.#invoke(() => {
+          this.#getApi().OnInputCompleted(id3);
+        });
+      }
+    });
+    this.#inputs.set(id3, input);
+    if (!this.#inputStyles) {
+      this.#inputStyles = createInputStyles();
+      this.#viewport.append(this.#inputStyles);
+    }
   }
   #invoke(action) {
     try {
@@ -5546,6 +6322,12 @@ var DomBrowserBridge = class {
   }
   #stop() {
     this.#stopped = true;
+    this.#stopTicker();
+    for (const input of this.#inputs.values()) {
+      input.dispose();
+    }
+    this.#inputStyles?.remove();
+    this.#inputStyles = void 0;
     this.#theme.dispose();
     if (this.#mountedId) {
       this.#unmount(this.#mountedId);
@@ -5558,22 +6340,22 @@ var DomBrowserBridge = class {
   #report(message) {
     this.#onError(message);
   }
-  #create(tagName2) {
+  #create(tagName4) {
     if (this.#stopped) {
       throw new Error("MAUI bridge is stopped");
     }
-    if (tagName2 !== tagName2.toLowerCase()) {
-      throw new Error(`Expected a lowercase HTML tag name: ${tagName2}`);
+    if (tagName4 !== tagName4.toLowerCase()) {
+      throw new Error(`Expected a lowercase HTML tag name: ${tagName4}`);
     }
-    if (tagName2.includes("-") && !customElements.get(tagName2)) {
-      throw new Error(`Custom element is not registered: ${tagName2}`);
+    if (tagName4.includes("-") && !customElements.get(tagName4)) {
+      throw new Error(`Custom element is not registered: ${tagName4}`);
     }
     if (this.#sequence >= 2147483647) {
       throw new Error("MAUI element handle limit reached");
     }
-    const element = document.createElement(tagName2);
+    const element = document.createElement(tagName4);
     if (element instanceof HTMLUnknownElement) {
-      throw new Error(`Unknown HTML element: ${tagName2}`);
+      throw new Error(`Unknown HTML element: ${tagName4}`);
     }
     const id3 = ++this.#sequence;
     element.style.position = "absolute";
@@ -5613,6 +6395,7 @@ var DomBrowserBridge = class {
     });
   }
   #measure(id3, width, height, returnHeight) {
+    this.#inputs.get(id3)?.flush();
     const element = this.#get(id3);
     const saved = element.style.cssText;
     try {
@@ -5639,6 +6422,8 @@ var DomBrowserBridge = class {
   }
   #release(id3) {
     const element = this.#get(id3);
+    this.#inputs.get(id3)?.dispose();
+    this.#inputs.delete(id3);
     this.#unmount(id3);
     this.#unsubscribeClick(id3);
     const onScroll = this.#scrolls.get(id3);
@@ -5726,20 +6511,13 @@ var DomBrowserBridge = class {
   };
 };
 
-// node_modules/@fluentui/web-components/dist/esm/fluent-design-system.js
-var FluentDesignSystem = Object.freeze({
-  prefix: "fluent",
-  shadowRootMode: "open",
-  registry: globalThis.customElements
-});
-
 // node_modules/@fluentui/web-components/dist/esm/button/button.options.js
 var ButtonType = {
   submit: "submit",
   reset: "reset",
   button: "button"
 };
-var tagName = `${FluentDesignSystem.prefix}-button`;
+var tagName2 = `${FluentDesignSystem.prefix}-button`;
 
 // node_modules/@fluentui/web-components/dist/esm/utils/display.js
 var hidden = `:host([hidden]){display:none}`;
@@ -5756,11 +6534,16 @@ var colorNeutralForeground2Hover = "var(--colorNeutralForeground2Hover)";
 var colorNeutralForeground2Pressed = "var(--colorNeutralForeground2Pressed)";
 var colorNeutralForeground2BrandHover = "var(--colorNeutralForeground2BrandHover)";
 var colorNeutralForeground2BrandPressed = "var(--colorNeutralForeground2BrandPressed)";
+var colorNeutralForeground3 = "var(--colorNeutralForeground3)";
+var colorNeutralForeground4 = "var(--colorNeutralForeground4)";
 var colorNeutralForegroundDisabled = "var(--colorNeutralForegroundDisabled)";
 var colorNeutralForegroundOnBrand = "var(--colorNeutralForegroundOnBrand)";
+var colorNeutralForegroundInverted = "var(--colorNeutralForegroundInverted)";
 var colorNeutralBackground1 = "var(--colorNeutralBackground1)";
 var colorNeutralBackground1Hover = "var(--colorNeutralBackground1Hover)";
 var colorNeutralBackground1Pressed = "var(--colorNeutralBackground1Pressed)";
+var colorNeutralBackground3 = "var(--colorNeutralBackground3)";
+var colorNeutralBackgroundInverted = "var(--colorNeutralBackgroundInverted)";
 var colorSubtleBackground = "var(--colorSubtleBackground)";
 var colorSubtleBackgroundHover = "var(--colorSubtleBackgroundHover)";
 var colorSubtleBackgroundPressed = "var(--colorSubtleBackgroundPressed)";
@@ -5771,36 +6554,68 @@ var colorNeutralBackgroundDisabled = "var(--colorNeutralBackgroundDisabled)";
 var colorBrandBackground = "var(--colorBrandBackground)";
 var colorBrandBackgroundHover = "var(--colorBrandBackgroundHover)";
 var colorBrandBackgroundPressed = "var(--colorBrandBackgroundPressed)";
+var colorNeutralStrokeAccessible = "var(--colorNeutralStrokeAccessible)";
+var colorNeutralStrokeAccessibleHover = "var(--colorNeutralStrokeAccessibleHover)";
+var colorNeutralStrokeAccessiblePressed = "var(--colorNeutralStrokeAccessiblePressed)";
 var colorNeutralStroke1 = "var(--colorNeutralStroke1)";
 var colorNeutralStroke1Hover = "var(--colorNeutralStroke1Hover)";
 var colorNeutralStroke1Pressed = "var(--colorNeutralStroke1Pressed)";
+var colorCompoundBrandStroke = "var(--colorCompoundBrandStroke)";
+var colorCompoundBrandStrokePressed = "var(--colorCompoundBrandStrokePressed)";
 var colorNeutralStrokeDisabled = "var(--colorNeutralStrokeDisabled)";
 var colorTransparentStroke = "var(--colorTransparentStroke)";
+var colorTransparentStrokeInteractive = "var(--colorTransparentStrokeInteractive)";
 var colorStrokeFocus2 = "var(--colorStrokeFocus2)";
+var colorPaletteRedBorder2 = "var(--colorPaletteRedBorder2)";
 var borderRadiusNone = "var(--borderRadiusNone)";
 var borderRadiusSmall = "var(--borderRadiusSmall)";
 var borderRadiusMedium = "var(--borderRadiusMedium)";
 var borderRadiusLarge = "var(--borderRadiusLarge)";
 var borderRadiusCircular = "var(--borderRadiusCircular)";
 var fontFamilyBase = "var(--fontFamilyBase)";
+var fontFamilyMonospace = "var(--fontFamilyMonospace)";
+var fontFamilyNumeric = "var(--fontFamilyNumeric)";
+var fontSizeBase100 = "var(--fontSizeBase100)";
 var fontSizeBase200 = "var(--fontSizeBase200)";
 var fontSizeBase300 = "var(--fontSizeBase300)";
 var fontSizeBase400 = "var(--fontSizeBase400)";
+var fontSizeBase500 = "var(--fontSizeBase500)";
+var fontSizeBase600 = "var(--fontSizeBase600)";
+var fontSizeHero700 = "var(--fontSizeHero700)";
+var fontSizeHero800 = "var(--fontSizeHero800)";
+var fontSizeHero900 = "var(--fontSizeHero900)";
+var fontSizeHero1000 = "var(--fontSizeHero1000)";
 var fontWeightRegular = "var(--fontWeightRegular)";
+var fontWeightMedium = "var(--fontWeightMedium)";
 var fontWeightSemibold = "var(--fontWeightSemibold)";
+var fontWeightBold = "var(--fontWeightBold)";
+var lineHeightBase100 = "var(--lineHeightBase100)";
 var lineHeightBase200 = "var(--lineHeightBase200)";
 var lineHeightBase300 = "var(--lineHeightBase300)";
 var lineHeightBase400 = "var(--lineHeightBase400)";
+var lineHeightBase500 = "var(--lineHeightBase500)";
+var lineHeightBase600 = "var(--lineHeightBase600)";
+var lineHeightHero700 = "var(--lineHeightHero700)";
+var lineHeightHero800 = "var(--lineHeightHero800)";
+var lineHeightHero900 = "var(--lineHeightHero900)";
+var lineHeightHero1000 = "var(--lineHeightHero1000)";
 var shadow2 = "var(--shadow2)";
 var shadow4 = "var(--shadow4)";
 var strokeWidthThin = "var(--strokeWidthThin)";
 var strokeWidthThick = "var(--strokeWidthThick)";
+var spacingHorizontalXXS = "var(--spacingHorizontalXXS)";
 var spacingHorizontalXS = "var(--spacingHorizontalXS)";
 var spacingHorizontalSNudge = "var(--spacingHorizontalSNudge)";
 var spacingHorizontalS = "var(--spacingHorizontalS)";
+var spacingHorizontalMNudge = "var(--spacingHorizontalMNudge)";
 var spacingHorizontalM = "var(--spacingHorizontalM)";
 var spacingHorizontalL = "var(--spacingHorizontalL)";
+var spacingVerticalXS = "var(--spacingVerticalXS)";
+var durationUltraFast = "var(--durationUltraFast)";
 var durationFaster = "var(--durationFaster)";
+var durationNormal = "var(--durationNormal)";
+var curveAccelerateMid = "var(--curveAccelerateMid)";
+var curveDecelerateMid = "var(--curveDecelerateMid)";
 var curveEasyEase = "var(--curveEasyEase)";
 
 // node_modules/@fluentui/web-components/dist/esm/button/button.styles.js
@@ -6082,30 +6897,6 @@ var styles = css`
   }
 `;
 
-// node_modules/@fluentui/web-components/dist/esm/utils/template-helpers.js
-function staticallyCompose(item) {
-  if (!item) {
-    return InlineTemplateDirective.empty;
-  }
-  if (typeof item === "string") {
-    return new InlineTemplateDirective(item);
-  }
-  if ("inline" in item) {
-    return item.inline();
-  }
-  return item;
-}
-
-// node_modules/@fluentui/web-components/dist/esm/patterns/start-end.js
-var StartEnd = class {
-};
-function endSlotTemplate(options) {
-  return html` <slot name="end" ${ref("end")}>${staticallyCompose(options.end)}</slot> `.inline();
-}
-function startSlotTemplate(options) {
-  return html` <slot name="start" ${ref("start")}>${staticallyCompose(options.start)}</slot> `.inline();
-}
-
 // node_modules/@fluentui/web-components/dist/esm/button/button.template.js
 function buttonTemplate(options = {}) {
   return html`
@@ -6125,49 +6916,11 @@ var template = buttonTemplate();
 
 // node_modules/@fluentui/web-components/dist/esm/button/button.definition.js
 var definition = {
-  name: tagName,
+  name: tagName2,
   registry: FluentDesignSystem.registry,
   styles,
   template
 };
-
-// node_modules/tslib/tslib.es6.mjs
-function __decorate(decorators, target, key, desc) {
-  var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-  if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-  else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-  return c > 3 && r && Object.defineProperty(target, key, r), r;
-}
-
-// node_modules/@fluentui/web-components/dist/esm/utils/apply-mixins.js
-function applyMixins(derivedCtor, ...baseCtors) {
-  const derivedAttributes = AttributeConfiguration.locate(derivedCtor);
-  baseCtors.forEach((baseCtor) => {
-    Object.getOwnPropertyNames(baseCtor.prototype).forEach((name) => {
-      if (name !== "constructor") {
-        Object.defineProperty(
-          derivedCtor.prototype,
-          name,
-          /* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */
-          Object.getOwnPropertyDescriptor(baseCtor.prototype, name)
-        );
-      }
-    });
-    const baseAttributes = AttributeConfiguration.locate(baseCtor);
-    baseAttributes.forEach((x) => derivedAttributes.push(x));
-  });
-}
-
-// node_modules/@fluentui/web-components/dist/esm/utils/autofocus.js
-function maybeSetAutoFocus(element) {
-  const doc = element.ownerDocument;
-  if (element?.isConnected && element?.hasAttribute("autofocus") && // Note: opacity=0 is considered visible based on the native `autofocus` implementation
-  element?.checkVisibility?.({ contentVisibilityAuto: true, visibilityProperty: true }) && [null, element, doc.body, doc.documentElement].includes(doc.activeElement)) {
-    Updates.enqueue(() => {
-      element.focus();
-    });
-  }
-}
 
 // node_modules/@fluentui/web-components/dist/esm/button/button.base.js
 var BaseButton = class extends FASTElement {
@@ -6445,36 +7198,484 @@ applyMixins(Button, StartEnd);
 // node_modules/@fluentui/web-components/dist/esm/button/define.js
 Button.define(definition);
 
+// node_modules/@fluentui/web-components/dist/esm/text/text.options.js
+var tagName3 = `${FluentDesignSystem.prefix}-text`;
+
+// node_modules/@fluentui/web-components/dist/esm/text/text.styles.js
+var styles2 = css`
+  ${display("inline")}
+
+  :host {
+    font-family: ${fontFamilyBase};
+    font-size: ${fontSizeBase300};
+    line-height: ${lineHeightBase300};
+    font-weight: ${fontWeightRegular};
+    text-align: start;
+  }
+
+  :host([nowrap]),
+  :host([nowrap]) ::slotted(*) {
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  :host([truncate]),
+  :host([truncate]) ::slotted(*) {
+    text-overflow: ellipsis;
+  }
+  :host([block]) {
+    display: block;
+  }
+  :host([italic]) {
+    font-style: italic;
+  }
+  :host([underline]) {
+    text-decoration-line: underline;
+  }
+  :host([strikethrough]) {
+    text-decoration-line: line-through;
+  }
+  :host([underline][strikethrough]) {
+    text-decoration-line: line-through underline;
+  }
+  :host([size='100']) {
+    font-size: ${fontSizeBase100};
+    line-height: ${lineHeightBase100};
+  }
+  :host([size='200']) {
+    font-size: ${fontSizeBase200};
+    line-height: ${lineHeightBase200};
+  }
+  :host([size='400']) {
+    font-size: ${fontSizeBase400};
+    line-height: ${lineHeightBase400};
+  }
+  :host([size='500']) {
+    font-size: ${fontSizeBase500};
+    line-height: ${lineHeightBase500};
+  }
+  :host([size='600']) {
+    font-size: ${fontSizeBase600};
+    line-height: ${lineHeightBase600};
+  }
+  :host([size='700']) {
+    font-size: ${fontSizeHero700};
+    line-height: ${lineHeightHero700};
+  }
+  :host([size='800']) {
+    font-size: ${fontSizeHero800};
+    line-height: ${lineHeightHero800};
+  }
+  :host([size='900']) {
+    font-size: ${fontSizeHero900};
+    line-height: ${lineHeightHero900};
+  }
+  :host([size='1000']) {
+    font-size: ${fontSizeHero1000};
+    line-height: ${lineHeightHero1000};
+  }
+  :host([font='monospace']) {
+    font-family: ${fontFamilyMonospace};
+  }
+  :host([font='numeric']) {
+    font-family: ${fontFamilyNumeric};
+  }
+  :host([weight='medium']) {
+    font-weight: ${fontWeightMedium};
+  }
+  :host([weight='semibold']) {
+    font-weight: ${fontWeightSemibold};
+  }
+  :host([weight='bold']) {
+    font-weight: ${fontWeightBold};
+  }
+  :host([align='center']) {
+    text-align: center;
+  }
+  :host([align='end']) {
+    text-align: end;
+  }
+  :host([align='justify']) {
+    text-align: justify;
+  }
+
+  ::slotted(*) {
+    font: inherit;
+    line-height: inherit;
+    text-decoration-line: inherit;
+    text-align: inherit;
+    text-decoration-line: inherit;
+    margin: 0;
+  }
+`;
+
+// node_modules/@fluentui/web-components/dist/esm/text/text.template.js
+var template2 = html`<slot></slot>`;
+
+// node_modules/@fluentui/web-components/dist/esm/text/text.definition.js
+var definition2 = {
+  name: tagName3,
+  registry: FluentDesignSystem.registry,
+  styles: styles2,
+  template: template2
+};
+
+// node_modules/@fluentui/web-components/dist/esm/text/text.js
+var Text = class extends FASTElement {
+  constructor() {
+    super(...arguments);
+    this.elementInternals = this.attachInternals();
+    this.nowrap = false;
+    this.truncate = false;
+    this.italic = false;
+    this.underline = false;
+    this.strikethrough = false;
+    this.block = false;
+  }
+};
+__decorate([
+  attr({ mode: "boolean" })
+], Text.prototype, "nowrap", void 0);
+__decorate([
+  attr({ mode: "boolean" })
+], Text.prototype, "truncate", void 0);
+__decorate([
+  attr({ mode: "boolean" })
+], Text.prototype, "italic", void 0);
+__decorate([
+  attr({ mode: "boolean" })
+], Text.prototype, "underline", void 0);
+__decorate([
+  attr({ mode: "boolean" })
+], Text.prototype, "strikethrough", void 0);
+__decorate([
+  attr({ mode: "boolean" })
+], Text.prototype, "block", void 0);
+__decorate([
+  attr
+], Text.prototype, "size", void 0);
+__decorate([
+  attr
+], Text.prototype, "font", void 0);
+__decorate([
+  attr
+], Text.prototype, "weight", void 0);
+__decorate([
+  attr
+], Text.prototype, "align", void 0);
+
+// node_modules/@fluentui/web-components/dist/esm/text/define.js
+Text.define(definition2);
+
+// node_modules/@fluentui/web-components/dist/esm/utils/support.js
+var AnchorPositioningCSSSupported = CSS.supports("anchor-name: --a");
+var AnchorPositioningHTMLSupported = "anchor" in HTMLElement.prototype;
+var CustomStatesSetSupported = CSS.supports("selector(:state(g))");
+
+// node_modules/@fluentui/web-components/dist/esm/utils/element-internals.js
+var statesMap = /* @__PURE__ */ new Map();
+function stateSelector(state) {
+  return statesMap.get(state) ?? statesMap.set(state, CustomStatesSetSupported ? `:state(${state})` : `[state--${state}]`).get(state);
+}
+
+// node_modules/@fluentui/web-components/dist/esm/styles/states/index.js
+var activeState = stateSelector("active");
+var badInputState = stateSelector("bad-input");
+var checkedState = stateSelector("checked");
+var customErrorState = stateSelector("custom-error");
+var descriptionState = stateSelector("description");
+var disabledState = stateSelector("disabled");
+var nativeDisabledState = ":is([disabled], :disabled)";
+var errorState = stateSelector("error");
+var flipBlockState = stateSelector("flip-block");
+var focusVisibleState = stateSelector("focus-visible");
+var hasMessageState = stateSelector("has-message");
+var indeterminateState = stateSelector("indeterminate");
+var multipleState = stateSelector("multiple");
+var openState = stateSelector("open");
+var patternMismatchState = stateSelector("pattern-mismatch");
+var placeholderShownState = stateSelector("placeholder-shown");
+var pressedState = stateSelector("pressed");
+var rangeOverflowState = stateSelector("range-overflow");
+var rangeUnderflowState = stateSelector("range-underflow");
+var requiredState = stateSelector("required");
+var selectedState = stateSelector("selected");
+var stepMismatchState = stateSelector("step-mismatch");
+var submenuState = stateSelector("submenu");
+var tooLongState = stateSelector("too-long");
+var tooShortState = stateSelector("too-short");
+var typeMismatchState = stateSelector("type-mismatch");
+var userInvalidState = stateSelector("user-invalid");
+var validState = stateSelector("valid");
+var valueMissingState = stateSelector("value-missing");
+
+// node_modules/@fluentui/web-components/dist/esm/text-input/text-input.styles.js
+var styles3 = css`
+  ${display("block")}
+
+  :host {
+    font-family: ${fontFamilyBase};
+    font-size: ${fontSizeBase300};
+    font-weight: ${fontWeightRegular};
+    line-height: ${lineHeightBase300};
+    max-width: 400px;
+  }
+  .label {
+    display: flex;
+    color: ${colorNeutralForeground1};
+    padding-bottom: ${spacingVerticalXS};
+    flex-shrink: 0;
+    padding-inline-end: ${spacingHorizontalXS};
+  }
+
+  .label[hidden],
+  :host(:empty) .label {
+    display: none;
+  }
+
+  .root {
+    align-items: center;
+    background-color: ${colorNeutralBackground1};
+    border: ${strokeWidthThin} solid ${colorNeutralStroke1};
+    border-bottom-color: ${colorNeutralStrokeAccessible};
+    border-radius: ${borderRadiusMedium};
+    box-sizing: border-box;
+    height: 32px;
+    display: inline-flex;
+    flex-direction: row;
+    gap: ${spacingHorizontalXXS};
+    padding: 0 ${spacingHorizontalMNudge};
+    position: relative;
+    width: 100%;
+  }
+
+  :has(.control:user-invalid) {
+    border-color: ${colorPaletteRedBorder2};
+  }
+
+  .root::after {
+    box-sizing: border-box;
+    content: '';
+    position: absolute;
+    left: -1px;
+    bottom: 0px;
+    right: -1px;
+    height: max(2px, ${borderRadiusMedium});
+    border-radius: 0 0 ${borderRadiusMedium} ${borderRadiusMedium};
+    border-bottom: 2px solid ${colorCompoundBrandStroke};
+    clip-path: inset(calc(100% - 2px) 1px 0px);
+    transform: scaleX(0);
+    transition-property: transform;
+    transition-duration: ${durationUltraFast};
+    transition-delay: ${curveAccelerateMid};
+  }
+  .control {
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    color: ${colorNeutralForeground1};
+    border-radius: ${borderRadiusMedium};
+    background: ${colorTransparentBackground};
+    font-family: ${fontFamilyBase};
+    font-weight: ${fontWeightRegular};
+    font-size: ${fontSizeBase300};
+    border: none;
+    vertical-align: center;
+  }
+  .control:focus-visible {
+    outline: 0;
+    border: 0;
+  }
+  .control::placeholder {
+    color: ${colorNeutralForeground4};
+  }
+  :host ::slotted([slot='start']),
+  :host ::slotted([slot='end']) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: ${colorNeutralForeground3};
+    font-size: ${fontSizeBase500};
+  }
+  :host ::slotted([slot='start']) {
+    padding-right: ${spacingHorizontalXXS};
+  }
+  :host ::slotted([slot='end']) {
+    padding-left: ${spacingHorizontalXXS};
+    gap: ${spacingHorizontalXS};
+  }
+  :host(:hover) .root {
+    border-color: ${colorNeutralStroke1Hover};
+    border-bottom-color: ${colorNeutralStrokeAccessibleHover};
+  }
+  :host(:active) .root {
+    border-color: ${colorNeutralStroke1Pressed};
+  }
+  :host(:focus-within) .root {
+    outline: transparent solid 2px;
+    border-bottom: 0;
+  }
+  :host(:focus-within) .root::after {
+    transform: scaleX(1);
+    transition-property: transform;
+    transition-duration: ${durationNormal};
+    transition-delay: ${curveDecelerateMid};
+  }
+  :host(:focus-within:active) .root:after {
+    border-bottom-color: ${colorCompoundBrandStrokePressed};
+  }
+  :host([appearance='outline']:focus-within) .root {
+    border: ${strokeWidthThin} solid ${colorNeutralStroke1};
+  }
+  :host(:focus-within) .control {
+    color: ${colorNeutralForeground1};
+  }
+  :host(${nativeDisabledState}) .root {
+    background: ${colorTransparentBackground};
+    border: ${strokeWidthThin} solid ${colorNeutralStrokeDisabled};
+  }
+  :host(${nativeDisabledState}) .control::placeholder,
+  :host(${nativeDisabledState}) ::slotted([slot='start']),
+  :host(${nativeDisabledState}) ::slotted([slot='end']) {
+    color: ${colorNeutralForegroundDisabled};
+  }
+  ::selection {
+    color: ${colorNeutralForegroundInverted};
+    background-color: ${colorNeutralBackgroundInverted};
+  }
+  :host([control-size='small']) .control {
+    font-size: ${fontSizeBase200};
+    font-weight: ${fontWeightRegular};
+    line-height: ${lineHeightBase200};
+  }
+  :host([control-size='small']) .root {
+    height: 24px;
+    gap: ${spacingHorizontalXXS};
+    padding: 0 ${spacingHorizontalSNudge};
+  }
+  :host([control-size='small']) ::slotted([slot='start']),
+  :host([control-size='small']) ::slotted([slot='end']) {
+    font-size: ${fontSizeBase400};
+  }
+  :host([control-size='large']) .control {
+    font-size: ${fontSizeBase400};
+    font-weight: ${fontWeightRegular};
+    line-height: ${lineHeightBase400};
+  }
+  :host([control-size='large']) .root {
+    height: 40px;
+    gap: ${spacingHorizontalS};
+    padding: 0 ${spacingHorizontalM};
+  }
+  :host([control-size='large']) ::slotted([slot='start']),
+  :host([control-size='large']) ::slotted([slot='end']) {
+    font-size: ${fontSizeBase600};
+  }
+  :host([appearance='underline']) .root {
+    background: ${colorTransparentBackground};
+    border: 0;
+    border-radius: 0;
+    border-bottom: ${strokeWidthThin} solid ${colorNeutralStrokeAccessible};
+  }
+  :host([appearance='underline']:hover) .root {
+    border-bottom-color: ${colorNeutralStrokeAccessibleHover};
+  }
+  :host([appearance='underline']:active) .root {
+    border-bottom-color: ${colorNeutralStrokeAccessiblePressed};
+  }
+  :host([appearance='underline']:focus-within) .root {
+    border: 0;
+    border-bottom-color: ${colorNeutralStrokeAccessiblePressed};
+  }
+  :host([appearance='underline']${nativeDisabledState}) .root {
+    border-bottom-color: ${colorNeutralStrokeDisabled};
+  }
+  :host([appearance='filled-lighter']) .root,
+  :host([appearance='filled-darker']) .root {
+    border: ${strokeWidthThin} solid ${colorTransparentStroke};
+    box-shadow: ${shadow2};
+  }
+  :host([appearance='filled-lighter']) .root {
+    background: ${colorNeutralBackground1};
+  }
+  :host([appearance='filled-darker']) .root {
+    background: ${colorNeutralBackground3};
+  }
+  :host([appearance='filled-lighter']:hover) .root,
+  :host([appearance='filled-darker']:hover) .root {
+    border-color: ${colorTransparentStrokeInteractive};
+  }
+  :host([appearance='filled-lighter']:active) .root,
+  :host([appearance='filled-darker']:active) .root {
+    border-color: ${colorTransparentStrokeInteractive};
+    background: ${colorNeutralBackground3};
+  }
+`;
+
+// node_modules/@fluentui/web-components/dist/esm/text-input/text-input.template.js
+function textInputTemplate(options = {}) {
+  return html`
+    <template @keydown="${(x, c) => x.keydownHandler(c.event)}">
+      <label part="label" for="control" class="label" ${ref("controlLabel")}>
+        <slot ${slotted("defaultSlottedNodes")}></slot>
+      </label>
+      <div class="root" part="root">
+        ${startSlotTemplate(options)}
+        <input
+          class="control"
+          part="control"
+          id="control"
+          @change="${(x, c) => x.changeHandler(c.event)}"
+          @input="${(x, c) => x.inputHandler(c.event)}"
+          autocomplete="${(x) => x.autocomplete}"
+          ?disabled="${(x) => x.disabled}"
+          list="${(x) => x.list}"
+          maxlength="${(x) => x.maxlength}"
+          minlength="${(x) => x.minlength}"
+          ?multiple="${(x) => x.multiple}"
+          name="${(x) => x.name}"
+          pattern="${(x) => x.pattern}"
+          placeholder="${(x) => x.placeholder}"
+          ?readonly="${(x) => x.readOnly}"
+          ?required="${(x) => x.required}"
+          size="${(x) => x.size}"
+          spellcheck="${(x) => x.spellcheck}"
+          type="${(x) => x.type}"
+          value="${(x) => x.value}"
+          ${ref("control")}
+        />
+        ${endSlotTemplate(options)}
+      </div>
+    </template>
+  `;
+}
+var template3 = textInputTemplate();
+
+// node_modules/@fluentui/web-components/dist/esm/text-input/text-input.definition.js
+var definition3 = {
+  name: tagName,
+  registry: FluentDesignSystem.registry,
+  shadowOptions: {
+    delegatesFocus: true
+  },
+  styles: styles3,
+  template: template3
+};
+
+// node_modules/@fluentui/web-components/dist/esm/text-input/define.js
+TextInput.define(definition3);
+
 // src/Wasm.FluentUIWebComponents/web/fluent.ts
 async function initializeFluent() {
   await customElements.whenDefined("fluent-button");
+  await customElements.whenDefined("fluent-text");
+  await customElements.whenDefined("fluent-text-input");
   await document.fonts.ready;
   Updates.process();
 }
 
-// src/Wasm.FluentUIWebComponents/web/components/label.ts
-var styles2 = new CSSStyleSheet();
-styles2.replaceSync(`
-    :host {
-        display: block;
-        white-space: pre-wrap;
-        overflow-wrap: break-word;
-        line-height: 1.3;
-        color: var(--colorNeutralForeground1, inherit);
-    }
-`);
-var MauiLabel = class extends HTMLElement {
-  constructor() {
-    super();
-    const root = this.attachShadow({ mode: "open" });
-    root.adoptedStyleSheets = [styles2];
-    root.append(document.createElement("slot"));
-  }
-};
-
 // src/Wasm.FluentUIWebComponents/web/components/scroll-view.ts
-var styles3 = new CSSStyleSheet();
-styles3.replaceSync(`
+var styles4 = new CSSStyleSheet();
+styles4.replaceSync(`
     :host {
         display: block;
         overflow-y: auto;
@@ -6485,13 +7686,12 @@ var MauiScrollView = class extends HTMLElement {
   constructor() {
     super();
     const root = this.attachShadow({ mode: "open" });
-    root.adoptedStyleSheets = [styles3];
+    root.adoptedStyleSheets = [styles4];
     root.append(document.createElement("slot"));
   }
 };
 
 // src/Wasm.FluentUIWebComponents/web/components/define.ts
-customElements.define("maui-label", MauiLabel);
 customElements.define("maui-scroll-view", MauiScrollView);
 
 // src/Wasm.FluentUIWebComponents/web/maui-browser.ts
