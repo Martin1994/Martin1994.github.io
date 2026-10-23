@@ -9,8 +9,8 @@
     ".NETCoreApp,Version=v10.0/browser-wasm": {
       "FluentBrowserSample/0.1.0": {
         "dependencies": {
-          "Microsoft.Maui.Platforms.Wasm.FluentUIWebComponents": "0.1.0",
-          "Microsoft.Maui.Platforms.Wasm.FluentUIWebComponents.Reference": "0.1.0.0"
+          "Microsoft.Maui.Platforms.Browser.FluentUIWebComponents": "0.1.0",
+          "Microsoft.Maui.Platforms.Browser.FluentUIWebComponents.Reference": "0.1.0.0"
         },
         "runtime": {
           "FluentBrowserSample.dll": {}
@@ -314,19 +314,19 @@
           }
         }
       },
-      "Microsoft.Maui.Platforms.Wasm.FluentUIWebComponents/0.1.0": {
+      "Microsoft.Maui.Platforms.Browser.FluentUIWebComponents/0.1.0": {
         "dependencies": {
           "Microsoft.Maui.Controls": "10.0.41"
         },
         "runtime": {
-          "Microsoft.Maui.Platforms.Wasm.FluentUIWebComponents.dll": {
+          "Microsoft.Maui.Platforms.Browser.FluentUIWebComponents.dll": {
             "fileVersion": "0.0.0.0"
           }
         }
       },
-      "Microsoft.Maui.Platforms.Wasm.FluentUIWebComponents.Reference/0.1.0.0": {
+      "Microsoft.Maui.Platforms.Browser.FluentUIWebComponents.Reference/0.1.0.0": {
         "runtime": {
-          "Microsoft.Maui.Platforms.Wasm.FluentUIWebComponents.dll": {
+          "Microsoft.Maui.Platforms.Browser.FluentUIWebComponents.dll": {
             "assemblyVersion": "0.1.0.0",
             "fileVersion": "0.1.0.0"
           }
@@ -459,12 +459,12 @@
       "path": "microsoft.maui.graphics/10.0.41",
       "hashPath": "microsoft.maui.graphics.10.0.41.nupkg.sha512"
     },
-    "Microsoft.Maui.Platforms.Wasm.FluentUIWebComponents/0.1.0": {
+    "Microsoft.Maui.Platforms.Browser.FluentUIWebComponents/0.1.0": {
       "type": "project",
       "serviceable": false,
       "sha512": ""
     },
-    "Microsoft.Maui.Platforms.Wasm.FluentUIWebComponents.Reference/0.1.0.0": {
+    "Microsoft.Maui.Platforms.Browser.FluentUIWebComponents.Reference/0.1.0.0": {
       "type": "reference",
       "serviceable": false,
       "sha512": ""

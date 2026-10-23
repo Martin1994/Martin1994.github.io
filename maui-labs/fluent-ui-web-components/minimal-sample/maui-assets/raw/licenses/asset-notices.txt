@@ -1,0 +1,35 @@
+BrowserSample asset sources and notices
+
+Paths below are relative to the repository root. Linked image/font files are
+redistributed unchanged; Link changes their logical filenames only.
+
+sample_bot.png
+Source: samples/EssentialsAISample/Resources/Images/dotnet_bot.png
+Matches dotnet/maui's .NET 10 template image byte-for-byte:
+Revision: 8493d298df4cfe82547bb46fb33c6d3d88b15d4e
+Path: src/Templates/src/templates/maui-mobile/Resources/Images/dotnet_bot.png
+Git blob: 054167e59747d8174d8f31cd0e92e169c55e2206
+https://github.com/dotnet/maui/blob/8493d298df4cfe82547bb46fb33c6d3d88b15d4e/LICENSE.txt
+Distributed under the upstream repository's MIT license; see maui-MIT.txt.
+
+sample_bot_vector.svg (also resolved by the sample_bot_vector.png alias)
+Source: samples/DevFlow.Sample/Resources/Images/dotnet_bot.svg
+The .png alias resolves to the unchanged SVG; no PNG conversion is performed.
+Matches dotnet/brand's illustration after normalizing CRLF/LF line endings:
+Revision: 29878855347e055ff15675471f7043fda3e92cea
+Path: dotnet-bot-illustrations/dotnet-bot/dotnet-bot.svg
+Upstream Git blob: abfaff26a85341a34addc984a849b17077cc5cc6
+https://github.com/dotnet/brand/blob/29878855347e055ff15675471f7043fda3e92cea/README.md#license
+Dedicated under CC0 1.0 Universal:
+https://github.com/dotnet/brand/blob/29878855347e055ff15675471f7043fda3e92cea/LICENSE
+https://creativecommons.org/publicdomain/zero/1.0/
+
+These copyright licenses do not grant trademark rights or imply endorsement.
+See the upstream .NET brand guidelines for usage guidance.
+
+OpenSans-Regular.ttf (registered alias: OpenSansSample)
+Source: samples/DevFlow.Sample/Resources/Fonts/OpenSans-Regular.ttf
+Digitized data copyright 2010-2011, Google Corporation.
+The tracked font's embedded license identifies Apache License, Version 2.0.
+See Apache-2.0.txt. Open Sans project: https://www.opensans.com/
+The license of this bundled version, rather than a newer font release, applies.

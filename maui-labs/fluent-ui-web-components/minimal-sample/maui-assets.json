@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "application": "FluentBrowserSample",
+  "images": {
+    "sample_bot.png": "maui-assets/images/sample_bot.png",
+    "sample_bot_vector.png": "maui-assets/images/sample_bot_vector.svg",
+    "sample_bot_vector.svg": "maui-assets/images/sample_bot_vector.svg"
+  },
+  "fonts": {
+    "OpenSans-Regular.ttf": "maui-assets/fonts/OpenSans-Regular.ttf"
+  },
+  "raw": {
+    "licenses/Apache-2.0.txt": "maui-assets/raw/licenses/Apache-2.0.txt",
+    "licenses/asset-notices.txt": "maui-assets/raw/licenses/asset-notices.txt",
+    "licenses/maui-MIT.txt": "maui-assets/raw/licenses/maui-MIT.txt",
+    "licenses/repository.txt": "maui-assets/raw/licenses/repository.txt"
+  }
+}

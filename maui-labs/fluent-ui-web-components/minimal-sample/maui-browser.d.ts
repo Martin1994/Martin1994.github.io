@@ -1,5 +1,4 @@
 import type { DotnetHostBuilder } from './dotnet.js';
-import './components/define.js';
 /** Owns a running browser application. Repeated disposal is harmless. */
 export interface MauiApplicationHandle {
     dispose(): void;

@@ -1,36 +1,26 @@
-// src/Wasm.FluentUIWebComponents/web/contracts.ts
+// src/Browser.FluentUIWebComponents/web/generated/contracts.g.ts
+var BrowserModuleName = "maui-browser";
+var BrowserApplicationAssemblyName = "Microsoft.Maui.Platforms.Browser.FluentUIWebComponents.dll";
+var exportMethods = ["AnimationTick", "LayoutTick", "OnClick", "OnImageLoaded", "OnInput", "OnInputCompleted", "OnInputFocus", "OnInputSelection", "OnScroll", "OnSystemThemeChanged", "RunScheduled", "Shutdown"];
 function isRecord(value) {
   return typeof value === "object" && value !== null;
 }
-function assertBrowserExports(value) {
-  const methods = [
-    "LayoutTick",
-    "OnClick",
-    "OnScroll",
-    "RunScheduled",
-    "OnSystemThemeChanged",
-    "OnInput",
-    "OnInputFocus",
-    "OnInputSelection",
-    "OnInputCompleted",
-    "AnimationTick",
-    "Shutdown"
-  ];
-  if (!isRecord(value) || !methods.every((name) => {
-    return typeof value[name] === "function";
-  })) {
-    throw new Error("The MAUI backend assembly does not expose the expected browser callbacks");
-  }
-}
-function resolveBrowserExports(assembly) {
+function resolveBrowserApplicationExports(assembly) {
   let value = assembly;
-  for (const name of ["Microsoft", "Maui", "Platforms", "Wasm", "FluentUIWebComponents", "BrowserApplication"]) {
+  for (const name of ["Microsoft", "Maui", "Platforms", "Browser", "FluentUIWebComponents", "BrowserApplication"]) {
     if (!isRecord(value)) {
-      throw new Error("Invalid MAUI backend assembly exports");
+      throw new Error("Invalid assembly export path: Microsoft.Maui.Platforms.Browser.FluentUIWebComponents.BrowserApplication");
     }
     value = value[name];
   }
-  assertBrowserExports(value);
+  if (!isRecord(value)) {
+    throw new Error("Invalid interop exports object");
+  }
+  for (const name of exportMethods) {
+    if (typeof value[name] !== "function") {
+      throw new Error(`Missing interop export: ${name}`);
+    }
+  }
   return value;
 }
 
@@ -114,11 +104,11 @@ var emptyArray = Object.freeze([]);
 function createTypeRegistry() {
   const typeToDefinition = /* @__PURE__ */ new Map();
   return Object.freeze({
-    register(definition4) {
-      if (typeToDefinition.has(definition4.type)) {
+    register(definition5) {
+      if (typeToDefinition.has(definition5.type)) {
         return false;
       }
-      typeToDefinition.set(definition4.type, definition4);
+      typeToDefinition.set(definition5.type, definition5);
       return true;
     },
     getByType(key) {
@@ -695,7 +685,7 @@ var defaultPolicy = Object.freeze({
   createHTML(value) {
     return fastTrustedType.createHTML(value);
   },
-  protect(tagName4, aspect, aspectName, sink) {
+  protect(tagName5, aspect, aspectName, sink) {
     return sink;
   }
 });
@@ -908,8 +898,8 @@ function attr(configOrTarget, prop) {
 
 // node_modules/@microsoft/fast-element/dist/esm/styles/element-styles.js
 var DefaultStyleStrategy;
-function reduceStyles(styles5) {
-  return styles5.reduce((reduced, current) => {
+function reduceStyles(styles6) {
+  return styles6.reduce((reduced, current) => {
     if (current instanceof ElementStyles) {
       reduced.push(...reduceStyles(current.styles));
     } else {
@@ -935,8 +925,8 @@ var ElementStyles = class _ElementStyles {
    * Creates an instance of ElementStyles.
    * @param styles - The styles that will be associated with elements.
    */
-  constructor(styles5) {
-    this.styles = styles5;
+  constructor(styles6) {
+    this.styles = styles6;
     this.targets = /* @__PURE__ */ new WeakSet();
     this._strategy = null;
   }
@@ -974,16 +964,16 @@ var ElementStyles = class _ElementStyles {
    * @param styles - The style options to normalize.
    * @returns A singular ElementStyles instance or undefined.
    */
-  static normalize(styles5) {
-    return styles5 === void 0 ? void 0 : Array.isArray(styles5) ? new _ElementStyles(styles5) : styles5 instanceof _ElementStyles ? styles5 : new _ElementStyles([styles5]);
+  static normalize(styles6) {
+    return styles6 === void 0 ? void 0 : Array.isArray(styles6) ? new _ElementStyles(styles6) : styles6 instanceof _ElementStyles ? styles6 : new _ElementStyles([styles6]);
   }
 };
 ElementStyles.supportsAdoptedStyleSheets = Array.isArray(document.adoptedStyleSheets) && "replace" in CSSStyleSheet.prototype;
 function createAdoptedSheetsStrategy() {
   const cache = /* @__PURE__ */ new Map();
   return class FallbackAdoptedSheetsStrategy {
-    constructor(styles5) {
-      this.sheets = styles5.map((x) => {
+    constructor(styles6) {
+      this.sheets = styles6.map((x) => {
         if (x instanceof CSSStyleSheet) {
           return x;
         }
@@ -1009,8 +999,8 @@ function createAdoptedSheetsStrategy() {
 var fallbackStyleId = 0;
 function createStyleElementStrategy() {
   return class FallbackStyleElementStrategy {
-    constructor(styles5) {
-      this.styles = styles5;
+    constructor(styles6) {
+      this.styles = styles6;
       this.styleClass = `fast-${++fallbackStyleId}`;
     }
     addStylesTo(target) {
@@ -1024,9 +1014,9 @@ function createStyleElementStrategy() {
     }
     removeStylesFrom(target) {
       const t = target === document ? document.body : target;
-      const styles5 = t.querySelectorAll(`.${this.styleClass}`);
-      for (let i = 0, ii = styles5.length; i < ii; ++i) {
-        t.removeChild(styles5[i]);
+      const styles6 = t.querySelectorAll(`.${this.styleClass}`);
+      for (let i = 0, ii = styles6.length; i < ii; ++i) {
+        t.removeChild(styles6[i]);
       }
     }
   };
@@ -1039,15 +1029,15 @@ var typeRegistry = createTypeRegistry();
 var definitionInstances = /* @__PURE__ */ new WeakMap();
 var instanceRefs = /* @__PURE__ */ new WeakMap();
 var fastElementRegistry = Object.freeze({
-  register(definition4) {
-    if (!typeRegistry.register(definition4)) {
+  register(definition5) {
+    if (!typeRegistry.register(definition5)) {
       return false;
     }
-    const registeredTypes = getRegisteredTypes(definition4.registry);
-    if (!Object.prototype.hasOwnProperty.call(registeredTypes, definition4.name)) {
-      Observable.defineProperty(registeredTypes, definition4.name);
+    const registeredTypes = getRegisteredTypes(definition5.registry);
+    if (!Object.prototype.hasOwnProperty.call(registeredTypes, definition5.name)) {
+      Observable.defineProperty(registeredTypes, definition5.name);
     }
-    registeredTypes[definition4.name] = definition4.type;
+    registeredTypes[definition5.name] = definition5.type;
     return true;
   },
   getByType: typeRegistry.getByType,
@@ -1073,46 +1063,46 @@ function whenRegistered(name, registry3 = customElements) {
   if (!Object.prototype.hasOwnProperty.call(registeredTypes, name)) {
     Observable.defineProperty(registeredTypes, name);
   }
-  const definition4 = getDefinitionForType(registeredTypes[name]);
-  if (definition4 !== void 0) {
-    return Promise.resolve(definition4);
+  const definition5 = getDefinitionForType(registeredTypes[name]);
+  if (definition5 !== void 0) {
+    return Promise.resolve(definition5);
   }
   return new Promise((resolve) => {
     const notifier = Observable.getNotifier(registeredTypes);
     const subscriber = {
       handleChange: () => {
-        const definition5 = getDefinitionForType(registeredTypes[name]);
-        if (definition5 === void 0) {
+        const definition6 = getDefinitionForType(registeredTypes[name]);
+        if (definition6 === void 0) {
           return;
         }
         notifier.unsubscribe(subscriber, name);
-        resolve(definition5);
+        resolve(definition6);
       }
     };
     notifier.subscribe(subscriber, name);
   });
 }
-function trackFASTElementInstance(definition4, instance) {
+function trackFASTElementInstance(definition5, instance) {
   if (instanceRefs.has(instance)) {
     return false;
   }
-  let instances = definitionInstances.get(definition4);
+  let instances = definitionInstances.get(definition5);
   const isFirstInstance = instances === void 0;
   if (instances === void 0) {
     instances = /* @__PURE__ */ new Set();
-    definitionInstances.set(definition4, instances);
+    definitionInstances.set(definition5, instances);
   }
   const ref2 = new WeakRef(instance);
   instances.add(ref2);
   instanceRefs.set(instance, ref2);
   return isFirstInstance;
 }
-function trackedFASTElementInstances(definition4, callback) {
-  const instances = definitionInstances.get(definition4);
+function trackedFASTElementInstances(definition5, callback) {
+  const instances = definitionInstances.get(definition5);
   if (instances === void 0) {
     return;
   }
-  definitionInstances.delete(definition4);
+  definitionInstances.delete(definition5);
   for (const ref2 of instances) {
     const instance = ref2.deref();
     if (instance !== void 0) {
@@ -1136,23 +1126,23 @@ function isFASTElementTemplateResolver(value) {
 function isPromiseLike(value) {
   return typeof (value === null || value === void 0 ? void 0 : value.then) === "function";
 }
-function finalizeResolvedTemplate(definition4, template4) {
-  pendingTemplateResolutions.delete(definition4);
-  if (definition4.template === void 0 && template4 !== void 0) {
-    definition4.template = template4;
+function finalizeResolvedTemplate(definition5, template5) {
+  pendingTemplateResolutions.delete(definition5);
+  if (definition5.template === void 0 && template5 !== void 0) {
+    definition5.template = template5;
   }
-  if (definition4.template !== void 0) {
-    templateResolutionErrors.delete(definition4);
-    templateResolvers.delete(definition4);
-    return definition4.template;
+  if (definition5.template !== void 0) {
+    templateResolutionErrors.delete(definition5);
+    templateResolvers.delete(definition5);
+    return definition5.template;
   }
   return void 0;
 }
-function applyFASTElementExtensions(definition4, registry3 = definition4.registry, extensions) {
+function applyFASTElementExtensions(definition5, registry3 = definition5.registry, extensions) {
   if (!(extensions === null || extensions === void 0 ? void 0 : extensions.length)) {
     return;
   }
-  const typedDefinition = definition4;
+  const typedDefinition = definition5;
   let registries = extensionRegistries.get(typedDefinition);
   if (registries === null || registries === void 0 ? void 0 : registries.has(registry3)) {
     return;
@@ -1163,47 +1153,47 @@ function applyFASTElementExtensions(definition4, registry3 = definition4.registr
   }
   registries.add(registry3);
   for (const extension of extensions) {
-    extension(definition4);
+    extension(definition5);
   }
 }
-function getLateAttributeLookup(definition4) {
+function getLateAttributeLookup(definition5) {
   var _a2;
-  return (_a2 = lateAttributeLookups.get(definition4)) !== null && _a2 !== void 0 ? _a2 : null;
+  return (_a2 = lateAttributeLookups.get(definition5)) !== null && _a2 !== void 0 ? _a2 : null;
 }
-function resolveFASTElementTemplate(definition4) {
-  if (definition4.template !== void 0) {
-    templateResolutionErrors.delete(definition4);
-    return definition4.template;
+function resolveFASTElementTemplate(definition5) {
+  if (definition5.template !== void 0) {
+    templateResolutionErrors.delete(definition5);
+    return definition5.template;
   }
-  const pendingResolution = pendingTemplateResolutions.get(definition4);
+  const pendingResolution = pendingTemplateResolutions.get(definition5);
   if (pendingResolution) {
     return pendingResolution;
   }
-  const templateResolver = templateResolvers.get(definition4);
+  const templateResolver = templateResolvers.get(definition5);
   if (!templateResolver) {
     return void 0;
   }
-  templateResolutionErrors.delete(definition4);
-  let template4;
+  templateResolutionErrors.delete(definition5);
+  let template5;
   try {
-    template4 = templateResolver(definition4);
+    template5 = templateResolver(definition5);
   } catch (error) {
-    templateResolutionErrors.set(definition4, error);
+    templateResolutionErrors.set(definition5, error);
     throw error;
   }
-  if (isPromiseLike(template4)) {
-    const resolution = Promise.resolve(template4).then((resolvedTemplate) => finalizeResolvedTemplate(definition4, resolvedTemplate)).catch((error) => {
-      pendingTemplateResolutions.delete(definition4);
-      templateResolutionErrors.set(definition4, error);
+  if (isPromiseLike(template5)) {
+    const resolution = Promise.resolve(template5).then((resolvedTemplate) => finalizeResolvedTemplate(definition5, resolvedTemplate)).catch((error) => {
+      pendingTemplateResolutions.delete(definition5);
+      templateResolutionErrors.set(definition5, error);
       throw error;
     });
-    pendingTemplateResolutions.set(definition4, resolution);
+    pendingTemplateResolutions.set(definition5, resolution);
     return resolution;
   }
-  return finalizeResolvedTemplate(definition4, template4);
+  return finalizeResolvedTemplate(definition5, template5);
 }
-function setFASTElementTemplateError(definition4, error) {
-  const typedDefinition = definition4;
+function setFASTElementTemplateError(definition5, error) {
+  const typedDefinition = definition5;
   if (error === void 0) {
     templateResolutionErrors.delete(typedDefinition);
     return;
@@ -1269,8 +1259,8 @@ var FASTElementDefinition = class _FASTElementDefinition {
     if (!registry3.get(this.name)) {
       applyFASTElementExtensions(this, registry3, extensions);
       if (this.template === void 0 && templateResolvers.has(this)) {
-        void Promise.resolve().then(() => resolveFASTElementTemplate(this)).then((template4) => {
-          if (template4 !== void 0 && !registry3.get(this.name)) {
+        void Promise.resolve().then(() => resolveFASTElementTemplate(this)).then((template5) => {
+          if (template5 !== void 0 && !registry3.get(this.name)) {
             this.platformDefined = true;
             registry3.define(this.name, type, this.elementOptions);
           }
@@ -1292,9 +1282,9 @@ var FASTElementDefinition = class _FASTElementDefinition {
    * that describes the element to define.
    */
   static compose(type, nameOrDef) {
-    const definition4 = fastElementBaseTypes.has(type) || fastElementRegistry.getByType(type) ? new _FASTElementDefinition(class extends type {
+    const definition5 = fastElementBaseTypes.has(type) || fastElementRegistry.getByType(type) ? new _FASTElementDefinition(class extends type {
     }, nameOrDef) : new _FASTElementDefinition(type, nameOrDef);
-    return Promise.resolve(definition4);
+    return Promise.resolve(definition5);
   }
   /**
    * Registers a FASTElement base type.
@@ -1370,11 +1360,11 @@ var ElementController = class _ElementController {
   get template() {
     var _a2;
     if (this._template === null) {
-      const definition4 = this.definition;
+      const definition5 = this.definition;
       if (this.source.resolveTemplate) {
         this._template = this.source.resolveTemplate();
-      } else if (definition4.template) {
-        this._template = (_a2 = definition4.template) !== null && _a2 !== void 0 ? _a2 : null;
+      } else if (definition5.template) {
+        this._template = (_a2 = definition5.template) !== null && _a2 !== void 0 ? _a2 : null;
       }
     }
     return this._template;
@@ -1415,11 +1405,11 @@ var ElementController = class _ElementController {
   get mainStyles() {
     var _a2;
     if (this._mainStyles === null) {
-      const definition4 = this.definition;
+      const definition5 = this.definition;
       if (this.source.resolveStyles) {
         this._mainStyles = this.source.resolveStyles();
-      } else if (definition4.styles) {
-        this._mainStyles = (_a2 = definition4.styles) !== null && _a2 !== void 0 ? _a2 : null;
+      } else if (definition5.styles) {
+        this._mainStyles = (_a2 = definition5.styles) !== null && _a2 !== void 0 ? _a2 : null;
       }
     }
     return this._mainStyles;
@@ -1443,7 +1433,7 @@ var ElementController = class _ElementController {
    * controller in how to handle rendering and other platform integrations.
    * @internal
    */
-  constructor(element, definition4) {
+  constructor(element, definition5) {
     this.boundObservables = null;
     this.needsInitialization = true;
     this.hasExistingShadowRoot = false;
@@ -1463,8 +1453,8 @@ var ElementController = class _ElementController {
     this.view = null;
     this._notifier = new PropertyChangeNotifier(element);
     this.source = element;
-    this.definition = definition4;
-    this.shadowOptions = definition4.shadowOptions;
+    this.definition = definition5;
+    this.shadowOptions = definition5.shadowOptions;
     const prototype = Reflect.getPrototypeOf(element);
     const accessors = prototype === null ? [] : Observable.getAccessors(prototype);
     if (accessors.length > 0) {
@@ -1566,34 +1556,34 @@ var ElementController = class _ElementController {
    * Adds styles to this element. Providing an HTMLStyleElement will attach the element instance to the shadowRoot.
    * @param styles - The styles to add.
    */
-  addStyles(styles5) {
+  addStyles(styles6) {
     var _a2;
-    if (!styles5) {
+    if (!styles6) {
       return;
     }
     const source = this.source;
-    if (styles5 instanceof HTMLElement) {
+    if (styles6 instanceof HTMLElement) {
       const target = (_a2 = getShadowRoot(source)) !== null && _a2 !== void 0 ? _a2 : this.source;
-      target.append(styles5);
-    } else if (!styles5.isAttachedTo(source)) {
-      styles5.addStylesTo(source);
+      target.append(styles6);
+    } else if (!styles6.isAttachedTo(source)) {
+      styles6.addStylesTo(source);
     }
   }
   /**
    * Removes styles from this element. Providing an HTMLStyleElement will detach the element instance from the shadowRoot.
    * @param styles - the styles to remove.
    */
-  removeStyles(styles5) {
+  removeStyles(styles6) {
     var _a2;
-    if (!styles5) {
+    if (!styles6) {
       return;
     }
     const source = this.source;
-    if (styles5 instanceof HTMLElement) {
+    if (styles6 instanceof HTMLElement) {
       const target = (_a2 = getShadowRoot(source)) !== null && _a2 !== void 0 ? _a2 : source;
-      target.removeChild(styles5);
-    } else if (styles5.isAttachedTo(source)) {
-      styles5.removeStylesFrom(source);
+      target.removeChild(styles6);
+    } else if (styles6.isAttachedTo(source)) {
+      styles6.removeStylesFrom(source);
     }
   }
   /**
@@ -1795,7 +1785,7 @@ var ElementController = class _ElementController {
    * @remarks
    * If `null` is provided, any existing view will be removed.
    */
-  renderTemplate(template4) {
+  renderTemplate(template5) {
     var _a2;
     const element = this.source;
     const host = (_a2 = getShadowRoot(element)) !== null && _a2 !== void 0 ? _a2 : element;
@@ -1809,14 +1799,14 @@ var ElementController = class _ElementController {
         }
       }
     }
-    if (template4) {
+    if (template5) {
       const hasPrerenderedContent = this.hasExistingShadowRoot && this.needsInitialization;
       let didHydrate = false;
       if (hasPrerenderedContent && _ElementController.hydrationHook) {
-        didHydrate = _ElementController.hydrationHook(this, template4, element, host);
+        didHydrate = _ElementController.hydrationHook(this, template5, element, host);
       }
       if (!didHydrate) {
-        this.renderClientSide(template4, element, host);
+        this.renderClientSide(template5, element, host);
       }
       this._resolvePrerendered(hasPrerenderedContent);
       this._resolveHydrated(didHydrate);
@@ -1829,14 +1819,14 @@ var ElementController = class _ElementController {
    * Standard client-side render: clears any stale content, clones the
    * compiled fragment, binds, and appends to the host.
    */
-  renderClientSide(template4, element, host) {
+  renderClientSide(template5, element, host) {
     if (this.hasExistingShadowRoot) {
       for (let child = host.firstChild; child !== null; child = host.firstChild) {
         host.removeChild(child);
       }
       this.hasExistingShadowRoot = false;
     }
-    this.view = template4.render(element, host, element);
+    this.view = template5.render(element, host, element);
     this.view.sourceLifetime = SourceLifetime.coupled;
   }
   /**
@@ -1853,16 +1843,16 @@ var ElementController = class _ElementController {
     if (controller !== void 0 && !override) {
       return controller;
     }
-    const definition4 = FASTElementDefinition.getForInstance(element);
-    if (definition4 === void 0) {
+    const definition5 = FASTElementDefinition.getForInstance(element);
+    if (definition5 === void 0) {
       throw FAST.error(Message.missingElementDefinition);
     }
-    if (definition4.template === void 0 && trackFASTElementInstance(definition4, element)) {
-      const notifier = Observable.getNotifier(definition4);
+    if (definition5.template === void 0 && trackFASTElementInstance(definition5, element)) {
+      const notifier = Observable.getNotifier(definition5);
       const subscriber = {
         handleChange: () => {
           notifier.unsubscribe(subscriber, "template");
-          trackedFASTElementInstances(definition4, (tracked) => {
+          trackedFASTElementInstances(definition5, (tracked) => {
             const trackedElement = tracked;
             _ElementController.forCustomElement(trackedElement, true);
             if (trackedElement.isConnected) {
@@ -1873,7 +1863,7 @@ var ElementController = class _ElementController {
       };
       notifier.subscribe(subscriber, "template");
     }
-    return element.$fastController = new elementControllerStrategy(element, definition4);
+    return element.$fastController = new elementControllerStrategy(element, definition5);
   }
   /**
    * Sets the strategy that ElementController.forCustomElement uses to construct
@@ -1903,9 +1893,9 @@ function normalizeStyleTarget(target) {
   }
 }
 var AdoptedStyleSheetsStrategy = class _AdoptedStyleSheetsStrategy {
-  constructor(styles5) {
+  constructor(styles6) {
     const styleSheetCache = _AdoptedStyleSheetsStrategy.styleSheetCache;
-    this.sheets = styles5.map((x) => {
+    this.sheets = styles6.map((x) => {
       if (x instanceof CSSStyleSheet) {
         return x;
       }
@@ -1932,26 +1922,26 @@ function usableStyleTarget(target) {
   return target === document ? document.body : target;
 }
 var StyleElementStrategy = class {
-  constructor(styles5) {
-    this.styles = styles5;
+  constructor(styles6) {
+    this.styles = styles6;
     this.styleClass = nextStyleId();
   }
   addStylesTo(target) {
     target = usableStyleTarget(normalizeStyleTarget(target));
-    const styles5 = this.styles;
+    const styles6 = this.styles;
     const styleClass = this.styleClass;
-    for (let i = 0; i < styles5.length; i++) {
+    for (let i = 0; i < styles6.length; i++) {
       const element = document.createElement("style");
-      element.innerHTML = styles5[i];
+      element.innerHTML = styles6[i];
       element.className = styleClass;
       target.append(element);
     }
   }
   removeStylesFrom(target) {
     target = usableStyleTarget(normalizeStyleTarget(target));
-    const styles5 = target.querySelectorAll(`.${this.styleClass}`);
-    for (let i = 0, ii = styles5.length; i < ii; ++i) {
-      target.removeChild(styles5[i]);
+    const styles6 = target.querySelectorAll(`.${this.styleClass}`);
+    for (let i = 0, ii = styles6.length; i < ii; ++i) {
+      target.removeChild(styles6[i]);
     }
   }
 };
@@ -2017,9 +2007,9 @@ function define(type, nameOrDef, extensions) {
   const composePromise = isFunction(type) ? FASTElementDefinition.compose(type, nameOrDef) : FASTElementDefinition.compose(this, type);
   return composePromise.then((def) => {
     applyFASTElementExtensions(def, def.registry, extensions);
-    const template4 = resolveFASTElementTemplate(def);
-    if (isPromiseLike2(template4)) {
-      return template4.then(() => def.define().type);
+    const template5 = resolveFASTElementTemplate(def);
+    if (isPromiseLike2(template5)) {
+      return template5.then(() => def.define().type);
     }
     return def.define().type;
   });
@@ -2068,7 +2058,7 @@ var CSSDirective = Object.freeze({
 
 // node_modules/@microsoft/fast-element/dist/esm/styles/css.js
 function collectStyles(strings, values) {
-  const styles5 = [];
+  const styles6 = [];
   let cssString = "";
   for (let i = 0, ii = strings.length - 1; i < ii; ++i) {
     cssString += strings[i];
@@ -2078,26 +2068,26 @@ function collectStyles(strings, values) {
     }
     if (value instanceof ElementStyles || value instanceof CSSStyleSheet) {
       if (cssString.trim() !== "") {
-        styles5.push(cssString);
+        styles6.push(cssString);
         cssString = "";
       }
-      styles5.push(value);
+      styles6.push(value);
     } else {
       cssString += value;
     }
   }
   cssString += strings[strings.length - 1];
   if (cssString.trim() !== "") {
-    styles5.push(cssString);
+    styles6.push(cssString);
   }
-  return styles5;
+  return styles6;
 }
 var css = ((strings, ...values) => {
   return new ElementStyles(collectStyles(strings, values));
 });
 var CSSPartial = class {
-  constructor(styles5) {
-    this.value = styles5.length === 0 ? "" : styles5.length === 1 ? styles5[0] : new ElementStyles(styles5);
+  constructor(styles6) {
+    this.value = styles6.length === 0 ? "" : styles6.length === 1 ? styles6[0] : new ElementStyles(styles6);
   }
   createCSS() {
     return this.value;
@@ -3341,7 +3331,7 @@ var CompilationContext = class {
     this.descriptors = {};
     this.factories = [];
   }
-  addFactory(factory, parentId, nodeId, targetIndex, tagName4) {
+  addFactory(factory, parentId, nodeId, targetIndex, tagName5) {
     var _a2, _b;
     if (!this.nodeIds.has(nodeId)) {
       this.nodeIds.add(nodeId);
@@ -3349,7 +3339,7 @@ var CompilationContext = class {
     }
     factory.id = (_a2 = factory.id) !== null && _a2 !== void 0 ? _a2 : nextId();
     factory.targetNodeId = nodeId;
-    factory.targetTagName = tagName4;
+    factory.targetTagName = tagName5;
     factory.policy = (_b = factory.policy) !== null && _b !== void 0 ? _b : this.policy;
     this.factories.push(factory);
   }
@@ -3508,26 +3498,26 @@ var Compiler = {
    * @public
    */
   compile(html2, factories, policy = DOM.policy) {
-    let template4;
+    let template5;
     if (isString(html2)) {
-      template4 = document.createElement(templateTag);
-      template4.innerHTML = policy.createHTML(html2);
-      const fec = template4.content.firstElementChild;
+      template5 = document.createElement(templateTag);
+      template5.innerHTML = policy.createHTML(html2);
+      const fec = template5.content.firstElementChild;
       if (fec !== null && fec.tagName === templateTag) {
-        template4 = fec;
+        template5 = fec;
       }
     } else {
-      template4 = html2;
+      template5 = html2;
     }
-    if (!template4.content.firstChild && !template4.content.lastChild) {
-      template4.content.appendChild(document.createComment(""));
+    if (!template5.content.firstChild && !template5.content.lastChild) {
+      template5.content.appendChild(document.createComment(""));
     }
-    const fragment = document.adoptNode(template4.content);
+    const fragment = document.adoptNode(template5.content);
     const context = new CompilationContext(fragment, factories, policy);
     compileAttributes(
       context,
       "",
-      template4,
+      template5,
       /* host */
       "h",
       0,
@@ -3641,8 +3631,8 @@ var InlineTemplateDirective = class {
 };
 InlineTemplateDirective.empty = new InlineTemplateDirective("");
 HTMLDirective.define(InlineTemplateDirective);
-function createHTML2(value, prevString, add, definition4 = HTMLDirective.getForInstance(value)) {
-  if (definition4.aspected) {
+function createHTML2(value, prevString, add, definition5 = HTMLDirective.getForInstance(value)) {
+  if (definition5.aspected) {
     const match = lastAttributeNameRegex.exec(prevString);
     if (match !== null) {
       HTMLDirective.assignAspect(value, match[2]);
@@ -3759,17 +3749,17 @@ var ViewTemplate = class _ViewTemplate {
     for (let i = 0, ii = strings.length - 1; i < ii; ++i) {
       const currentString = strings[i];
       let currentValue = values[i];
-      let definition4;
+      let definition5;
       html2 += currentString;
       if (isFunction(currentValue)) {
         currentValue = new HTMLBindingDirective(oneWay(currentValue));
       } else if (currentValue instanceof Binding) {
         currentValue = new HTMLBindingDirective(currentValue);
-      } else if (!(definition4 = HTMLDirective.getForInstance(currentValue))) {
+      } else if (!(definition5 = HTMLDirective.getForInstance(currentValue))) {
         const staticValue = currentValue;
         currentValue = new HTMLBindingDirective(oneTime(() => staticValue));
       }
-      html2 += createHTML2(currentValue, currentString, add, definition4);
+      html2 += createHTML2(currentValue, currentString, add, definition5);
     }
     return new _ViewTemplate(html2 + strings[strings.length - 1], factories, policy);
   }
@@ -5385,7 +5375,7 @@ var createDarkTheme = (brand) => {
 // node_modules/@fluentui/tokens/lib/themes/web/darkTheme.js
 var webDarkTheme = createDarkTheme(brandWeb);
 
-// src/Wasm.FluentUIWebComponents/web/theme.ts
+// src/Browser.FluentUIWebComponents/web/theme.ts
 function resolveTheme(theme) {
   switch (theme) {
     case "light":
@@ -5939,7 +5929,7 @@ __decorate([
 ], TextInput.prototype, "controlSize", void 0);
 applyMixins(TextInput, StartEnd);
 
-// src/Wasm.FluentUIWebComponents/web/input.ts
+// src/Browser.FluentUIWebComponents/web/input.ts
 var BrowserTextInput = class {
   #host;
   #abort = new AbortController();
@@ -6104,7 +6094,7 @@ var BrowserTextInput = class {
   }
 };
 
-// src/Wasm.FluentUIWebComponents/web/input.styles.ts
+// src/Browser.FluentUIWebComponents/web/input.styles.ts
 function createInputStyles() {
   const style = document.createElement("style");
   style.textContent = `
@@ -6127,13 +6117,220 @@ function createInputStyles() {
   return style;
 }
 
-// src/Wasm.FluentUIWebComponents/web/bridge.ts
+// src/Browser.FluentUIWebComponents/web/images.ts
+var BrowserImages = class {
+  constructor(resolve, complete, report) {
+    this.resolve = resolve;
+    this.complete = complete;
+    this.report = report;
+  }
+  resolve;
+  complete;
+  report;
+  requests = /* @__PURE__ */ new Map();
+  aspects = /* @__PURE__ */ new Map();
+  disposed = false;
+  setSource(id3, element, name, request) {
+    if (this.disposed) {
+      return;
+    }
+    this.clear(id3);
+    if (!name) {
+      return;
+    }
+    const image = element.ownerDocument.createElement("img");
+    image.alt = "";
+    Object.assign(image.style, {
+      display: "block",
+      width: "100%",
+      height: "100%",
+      minWidth: "0",
+      minHeight: "0",
+      maxWidth: "none",
+      maxHeight: "none",
+      objectPosition: "center"
+    });
+    const current = () => !this.disposed && this.requests.get(id3) === state;
+    const finish = (success, message) => {
+      if (!current() || state.settled) {
+        return;
+      }
+      state.settled = true;
+      unlisten();
+      if (!success) {
+        image.removeAttribute("src");
+        image.remove();
+        this.report(message ?? `Unable to load image '${name}'.`);
+      }
+      if (current()) {
+        this.complete(id3, request, success);
+      }
+    };
+    const load = () => finish(true);
+    const error = () => finish(false);
+    const unlisten = () => {
+      image.removeEventListener("load", load);
+      image.removeEventListener("error", error);
+    };
+    const state = { request, image, load, error, settled: false };
+    this.requests.set(id3, state);
+    this.applyAspect(id3, image);
+    image.addEventListener("load", load);
+    image.addEventListener("error", error);
+    try {
+      const url = this.resolve(name);
+      if (!current()) {
+        return;
+      }
+      if (!url) {
+        finish(false, `Image '${name}' is not in the asset catalog.`);
+        return;
+      }
+      element.append(image);
+      image.src = url;
+    } catch (error2) {
+      finish(false, `Unable to load image '${name}': ${String(error2)}`);
+    }
+  }
+  setAspect(id3, aspect) {
+    if (this.disposed) {
+      return;
+    }
+    this.aspects.set(id3, aspect);
+    const state = this.requests.get(id3);
+    if (state) {
+      this.applyAspect(id3, state.image);
+    }
+  }
+  applyAspect(id3, image) {
+    switch (this.aspects.get(id3)) {
+      case "AspectFill":
+        image.style.objectFit = "cover";
+        break;
+      case "Fill":
+        image.style.objectFit = "fill";
+        break;
+      case "Center":
+        image.style.objectFit = "none";
+        break;
+      default:
+        image.style.objectFit = "contain";
+        break;
+    }
+  }
+  clear(id3) {
+    const state = this.requests.get(id3);
+    this.requests.delete(id3);
+    if (!state) {
+      return;
+    }
+    state.image.removeEventListener("load", state.load);
+    state.image.removeEventListener("error", state.error);
+    state.image.removeAttribute("src");
+    state.image.remove();
+  }
+  release(id3) {
+    this.clear(id3);
+    this.aspects.delete(id3);
+  }
+  dispose() {
+    if (this.disposed) {
+      return;
+    }
+    this.disposed = true;
+    for (const id3 of this.requests.keys()) {
+      this.clear(id3);
+    }
+    this.aspects.clear();
+  }
+};
+
+// src/Browser.FluentUIWebComponents/web/fonts.ts
+var nextFamily = 0;
+var BrowserFonts = class {
+  constructor(resolve, requestLayout, report) {
+    this.resolve = resolve;
+    this.requestLayout = requestLayout;
+    this.report = report;
+  }
+  resolve;
+  requestLayout;
+  report;
+  requests = /* @__PURE__ */ new Map();
+  disposed = false;
+  getFamily(filename) {
+    const existing = this.requests.get(filename);
+    if (existing) {
+      return existing.family;
+    }
+    if (this.disposed) {
+      return "sans-serif";
+    }
+    const state = { family: `maui-font-${++nextFamily}` };
+    this.requests.set(filename, state);
+    const current = () => !this.disposed && this.requests.get(filename) === state;
+    const failed = (error) => {
+      if (!current()) {
+        return;
+      }
+      if (state.face) {
+        document.fonts.delete(state.face);
+      }
+      try {
+        this.report(`Unable to load font '${filename}': ${String(error)}`);
+      } finally {
+        if (current()) {
+          this.requestLayout();
+        }
+      }
+    };
+    try {
+      const url = this.resolve(filename);
+      if (!current()) {
+        return state.family;
+      }
+      if (!url) {
+        throw new Error("Font is not in the asset catalog.");
+      }
+      const quotedUrl = url.replace(/["\\\n\r\f]/g, (character) => `\\${character.charCodeAt(0).toString(16)} `);
+      const face = new FontFace(state.family, `url("${quotedUrl}")`);
+      state.face = face;
+      void face.load().then(() => {
+        if (!current()) {
+          return;
+        }
+        document.fonts.add(face);
+        this.requestLayout();
+      }).catch(failed);
+    } catch (error) {
+      failed(error);
+    }
+    return state.family;
+  }
+  dispose() {
+    if (this.disposed) {
+      return;
+    }
+    this.disposed = true;
+    for (const state of this.requests.values()) {
+      if (state.face) {
+        document.fonts.delete(state.face);
+      }
+    }
+    this.requests.clear();
+  }
+};
+
+// src/Browser.FluentUIWebComponents/web/bridge.ts
 var DomBrowserBridge = class {
+  // The existing JS-only unsubscribe operation is not part of the C# import contract.
   imports;
   #viewport;
   #getApi;
   #onError;
   #theme;
+  #images;
+  #fonts;
   #elements = /* @__PURE__ */ new Map();
   #clicks = /* @__PURE__ */ new Map();
   #scrolls = /* @__PURE__ */ new Map();
@@ -6142,6 +6339,7 @@ var DomBrowserBridge = class {
   #inputStyles;
   #sequence = 0;
   #observer;
+  #viewportSize;
   #mountedId = 0;
   #frameId = 0;
   #stopped = false;
@@ -6149,16 +6347,39 @@ var DomBrowserBridge = class {
   #tickerRunning = false;
   #lastTick;
   #tickInterval = 1e3 / 60;
-  constructor(viewport, getApi, onError) {
+  constructor(viewport, getApi, onError, assets) {
     this.#viewport = viewport;
     this.#getApi = getApi;
     this.#onError = onError;
+    this.#images = new BrowserImages(
+      (name) => assets.resolve("images", name),
+      (id3, request, success) => {
+        if (this.#stopped) {
+          return;
+        }
+        try {
+          this.#getApi().OnImageLoaded(id3, request, success);
+        } catch (error) {
+          this.#reportResource(String(error));
+        }
+      },
+      this.#reportResource
+    );
+    this.#fonts = new BrowserFonts(
+      (name) => assets.resolve("fonts", name),
+      this.#requestLayout,
+      this.#reportResource
+    );
     this.#theme = new BrowserTheme(viewport, (theme) => {
       this.#invoke(() => {
         this.#getApi().OnSystemThemeChanged(theme);
       });
     });
     this.imports = {
+      imageSource: (id3, name, request) => this.#images.setSource(id3, this.#get(id3), name, request),
+      imageAspect: (id3, aspect) => this.#images.setAspect(id3, aspect),
+      fontFamily: (filename) => this.#fonts.getFamily(filename),
+      reportResource: this.#reportResource,
       startTicker: this.#startTicker.bind(this),
       stopTicker: this.#stopTicker.bind(this),
       subscribeInput: this.#subscribeInput.bind(this),
@@ -6286,18 +6507,39 @@ var DomBrowserBridge = class {
       this.#onError(error instanceof Error ? error.message : String(error));
     }
   }
-  // Also passed directly to ResizeObserver, so retain the instance receiver.
-  #requestLayout = () => {
-    if (this.#stopped || !this.#mountedId || this.#frameId) {
+  #onViewportResize = (entries, observer) => {
+    if (this.#stopped || !this.#mountedId || observer !== this.#observer) {
       return;
     }
+    for (const entry of entries) {
+      if (entry.target !== this.#viewport) {
+        continue;
+      }
+      const { width, height } = entry.contentRect;
+      if (!Number.isFinite(width) || !Number.isFinite(height) || width < 0 || height < 0) {
+        continue;
+      }
+      this.#viewportSize = { width, height };
+      this.#requestLayout();
+    }
+  };
+  // Font and managed invalidations share the same coalesced layout scheduler.
+  #requestLayout = () => {
+    if (this.#stopped || !this.#mountedId || !this.#viewportSize || this.#frameId) {
+      return;
+    }
+    const observer = this.#observer;
     this.#frameId = requestAnimationFrame(() => {
+      if (observer !== this.#observer) {
+        return;
+      }
       this.#frameId = 0;
-      if (this.#stopped || !this.#mountedId) {
+      const size = this.#viewportSize;
+      if (this.#stopped || !this.#mountedId || !size || size.width <= 0 || size.height <= 0) {
         return;
       }
       this.#invoke(() => {
-        this.#getApi().LayoutTick(this.#viewport.clientWidth, this.#viewport.clientHeight);
+        this.#getApi().LayoutTick(size.width, size.height);
       });
     });
   };
@@ -6307,6 +6549,9 @@ var DomBrowserBridge = class {
     }
     this.#observer?.disconnect();
     this.#observer = void 0;
+    this.#viewportSize = void 0;
+    document.fonts.removeEventListener("loadingdone", this.#requestLayout);
+    document.fonts.removeEventListener("loadingerror", this.#requestLayout);
     cancelAnimationFrame(this.#frameId);
     this.#frameId = 0;
     this.#mountedId = 0;
@@ -6322,6 +6567,8 @@ var DomBrowserBridge = class {
   }
   #stop() {
     this.#stopped = true;
+    this.#images.dispose();
+    this.#fonts.dispose();
     this.#stopTicker();
     for (const input of this.#inputs.values()) {
       input.dispose();
@@ -6340,22 +6587,29 @@ var DomBrowserBridge = class {
   #report(message) {
     this.#onError(message);
   }
-  #create(tagName4) {
+  #reportResource = (message) => {
+    if (this.#stopped) {
+      return;
+    }
+    console.warn(message);
+    this.#viewport.dispatchEvent(new CustomEvent("maui-resource-error", { detail: message }));
+  };
+  #create(tagName5) {
     if (this.#stopped) {
       throw new Error("MAUI bridge is stopped");
     }
-    if (tagName4 !== tagName4.toLowerCase()) {
-      throw new Error(`Expected a lowercase HTML tag name: ${tagName4}`);
+    if (tagName5 !== tagName5.toLowerCase()) {
+      throw new Error(`Expected a lowercase HTML tag name: ${tagName5}`);
     }
-    if (tagName4.includes("-") && !customElements.get(tagName4)) {
-      throw new Error(`Custom element is not registered: ${tagName4}`);
+    if (tagName5.includes("-") && !customElements.get(tagName5)) {
+      throw new Error(`Custom element is not registered: ${tagName5}`);
     }
     if (this.#sequence >= 2147483647) {
       throw new Error("MAUI element handle limit reached");
     }
-    const element = document.createElement(tagName4);
+    const element = document.createElement(tagName5);
     if (element instanceof HTMLUnknownElement) {
-      throw new Error(`Unknown HTML element: ${tagName4}`);
+      throw new Error(`Unknown HTML element: ${tagName5}`);
     }
     const id3 = ++this.#sequence;
     element.style.position = "absolute";
@@ -6422,6 +6676,7 @@ var DomBrowserBridge = class {
   }
   #release(id3) {
     const element = this.#get(id3);
+    this.#images.release(id3);
     this.#inputs.get(id3)?.dispose();
     this.#inputs.delete(id3);
     this.#unmount(id3);
@@ -6443,9 +6698,11 @@ var DomBrowserBridge = class {
     }
     this.#viewport.append(this.#get(id3));
     this.#mountedId = id3;
-    this.#observer = new ResizeObserver(this.#requestLayout);
+    this.#viewportSize = void 0;
+    this.#observer = new ResizeObserver(this.#onViewportResize);
     this.#observer.observe(this.#viewport);
-    this.#requestLayout();
+    document.fonts.addEventListener("loadingdone", this.#requestLayout);
+    document.fonts.addEventListener("loadingerror", this.#requestLayout);
   }
   #subscribeClick(id3) {
     if (this.#stopped) {
@@ -6487,7 +6744,7 @@ var DomBrowserBridge = class {
   }
   #schedule(id3, milliseconds) {
     if (this.#stopped) {
-      return;
+      throw new Error("MAUI bridge has stopped");
     }
     clearTimeout(this.#timers.get(id3));
     this.#timers.set(id3, setTimeout(() => {
@@ -6510,6 +6767,27 @@ var DomBrowserBridge = class {
     }
   };
 };
+
+// src/Browser.FluentUIWebComponents/web/components/scroll-view.ts
+var styles = new CSSStyleSheet();
+styles.replaceSync(`
+    :host {
+        display: block;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+`);
+var MauiScrollView = class extends HTMLElement {
+  constructor() {
+    super();
+    const root = this.attachShadow({ mode: "open" });
+    root.adoptedStyleSheets = [styles];
+    root.append(document.createElement("slot"));
+  }
+};
+
+// src/Browser.FluentUIWebComponents/web/components/define.ts
+customElements.define("maui-scroll-view", MauiScrollView);
 
 // node_modules/@fluentui/web-components/dist/esm/button/button.options.js
 var ButtonType = {
@@ -6560,6 +6838,7 @@ var colorNeutralStrokeAccessiblePressed = "var(--colorNeutralStrokeAccessiblePre
 var colorNeutralStroke1 = "var(--colorNeutralStroke1)";
 var colorNeutralStroke1Hover = "var(--colorNeutralStroke1Hover)";
 var colorNeutralStroke1Pressed = "var(--colorNeutralStroke1Pressed)";
+var colorNeutralStroke2 = "var(--colorNeutralStroke2)";
 var colorCompoundBrandStroke = "var(--colorCompoundBrandStroke)";
 var colorCompoundBrandStrokePressed = "var(--colorCompoundBrandStrokePressed)";
 var colorNeutralStrokeDisabled = "var(--colorNeutralStrokeDisabled)";
@@ -6830,7 +7109,7 @@ var baseButtonStyles = css`
     border-color: transparent;
   }
 `;
-var styles = css`
+var styles2 = css`
   ${baseButtonStyles}
 
   :host(:is(:disabled, [disabled], [disabled-focusable], [appearance]:disabled, [appearance][disabled], [appearance][disabled-focusable])),
@@ -6918,7 +7197,7 @@ var template = buttonTemplate();
 var definition = {
   name: tagName2,
   registry: FluentDesignSystem.registry,
-  styles,
+  styles: styles2,
   template
 };
 
@@ -7202,7 +7481,7 @@ Button.define(definition);
 var tagName3 = `${FluentDesignSystem.prefix}-text`;
 
 // node_modules/@fluentui/web-components/dist/esm/text/text.styles.js
-var styles2 = css`
+var styles3 = css`
   ${display("inline")}
 
   :host {
@@ -7315,7 +7594,7 @@ var template2 = html`<slot></slot>`;
 var definition2 = {
   name: tagName3,
   registry: FluentDesignSystem.registry,
-  styles: styles2,
+  styles: styles3,
   template: template2
 };
 
@@ -7409,7 +7688,7 @@ var validState = stateSelector("valid");
 var valueMissingState = stateSelector("value-missing");
 
 // node_modules/@fluentui/web-components/dist/esm/text-input/text-input.styles.js
-var styles3 = css`
+var styles4 = css`
   ${display("block")}
 
   :host {
@@ -7657,44 +7936,161 @@ var definition3 = {
   shadowOptions: {
     delegatesFocus: true
   },
-  styles: styles3,
+  styles: styles4,
   template: template3
 };
 
 // node_modules/@fluentui/web-components/dist/esm/text-input/define.js
 TextInput.define(definition3);
 
-// src/Wasm.FluentUIWebComponents/web/fluent.ts
+// node_modules/@fluentui/web-components/dist/esm/image/image.options.js
+var tagName4 = `${FluentDesignSystem.prefix}-image`;
+
+// node_modules/@fluentui/web-components/dist/esm/image/image.styles.js
+var styles5 = css`
+  :host {
+    contain: content;
+  }
+
+  :host ::slotted(img) {
+    box-sizing: border-box;
+    min-height: 8px;
+    min-width: 8px;
+    display: inline-block;
+  }
+  :host([block]) ::slotted(img) {
+    width: 100%;
+    height: auto;
+  }
+  :host([bordered]) ::slotted(img) {
+    border: ${strokeWidthThin} solid ${colorNeutralStroke2};
+  }
+  :host([fit='none']) ::slotted(img) {
+    object-fit: none;
+    object-position: top left;
+    height: 100%;
+    width: 100%;
+  }
+  :host([fit='center']) ::slotted(img) {
+    object-fit: none;
+    object-position: center;
+    height: 100%;
+    width: 100%;
+  }
+  :host([fit='contain']) ::slotted(img) {
+    object-fit: contain;
+    object-position: center;
+    height: 100%;
+    width: 100%;
+  }
+  :host([fit='cover']) ::slotted(img) {
+    object-fit: cover;
+    object-position: center;
+    height: 100%;
+    width: 100%;
+  }
+  :host([shadow]) ::slotted(img) {
+    box-shadow: ${shadow4};
+  }
+  :host([shape='circular']) ::slotted(img) {
+    border-radius: ${borderRadiusCircular};
+  }
+  :host([shape='rounded']) ::slotted(img) {
+    border-radius: ${borderRadiusMedium};
+  }
+`;
+
+// node_modules/@fluentui/web-components/dist/esm/image/image.template.js
+var template4 = html`<slot></slot>`;
+
+// node_modules/@fluentui/web-components/dist/esm/image/image.definition.js
+var definition4 = {
+  name: tagName4,
+  registry: FluentDesignSystem.registry,
+  styles: styles5,
+  template: template4
+};
+
+// node_modules/@fluentui/web-components/dist/esm/image/image.js
+var Image = class extends FASTElement {
+};
+__decorate([
+  attr({ mode: "boolean" })
+], Image.prototype, "block", void 0);
+__decorate([
+  attr({ mode: "boolean" })
+], Image.prototype, "bordered", void 0);
+__decorate([
+  attr({ mode: "boolean" })
+], Image.prototype, "shadow", void 0);
+__decorate([
+  attr
+], Image.prototype, "fit", void 0);
+__decorate([
+  attr
+], Image.prototype, "shape", void 0);
+
+// node_modules/@fluentui/web-components/dist/esm/image/define.js
+Image.define(definition4);
+
+// src/Browser.FluentUIWebComponents/web/fluent.ts
 async function initializeFluent() {
   await customElements.whenDefined("fluent-button");
   await customElements.whenDefined("fluent-text");
   await customElements.whenDefined("fluent-text-input");
+  await customElements.whenDefined("fluent-image");
   await document.fonts.ready;
   Updates.process();
 }
 
-// src/Wasm.FluentUIWebComponents/web/components/scroll-view.ts
-var styles4 = new CSSStyleSheet();
-styles4.replaceSync(`
-    :host {
-        display: block;
-        overflow-y: auto;
-        overflow-x: hidden;
+// src/Browser.FluentUIWebComponents/web/assets.ts
+function record(value, context) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new Error(`Invalid MAUI asset catalog ${context}`);
+  }
+  return value;
+}
+function relativePath(value) {
+  return value.split("/").every((part) => part.length > 0 && part !== "." && part !== ".." && !/[\\\u0000-\u001f\u007f<>:"|?*]/.test(part) && !/[. ]$/.test(part));
+}
+var BrowserAssetCatalog = class {
+  #maps = /* @__PURE__ */ new Map();
+  constructor(value, application, baseUrl) {
+    const catalog = record(value, "root");
+    if (catalog.version !== 1 || catalog.application !== application) {
+      throw new Error(`MAUI asset catalog version/application mismatch (expected version 1, '${application}')`);
     }
-`);
-var MauiScrollView = class extends HTMLElement {
-  constructor() {
-    super();
-    const root = this.attachShadow({ mode: "open" });
-    root.adoptedStyleSheets = [styles4];
-    root.append(document.createElement("slot"));
+    for (const kind of ["images", "fonts", "raw"]) {
+      const entries = record(catalog[kind], kind);
+      const map = /* @__PURE__ */ new Map();
+      for (const [name, path] of Object.entries(entries)) {
+        if (!relativePath(name) || kind !== "raw" && name.includes("/") || typeof path !== "string" || !relativePath(path) || !path.startsWith(`maui-assets/${kind}/`)) {
+          throw new Error(`Invalid MAUI asset catalog ${kind} entry '${name}'`);
+        }
+        map.set(name, new URL(path.split("/").map(encodeURIComponent).join("/"), baseUrl).href);
+      }
+      this.#maps.set(kind, map);
+    }
+  }
+  resolve(kind, name) {
+    return this.#maps.get(kind)?.get(name);
   }
 };
+async function loadBrowserAssets(application, moduleUrl) {
+  const base = new URL(".", moduleUrl);
+  const url = new URL("maui-assets.json", base);
+  try {
+    const response = await fetch(url, { signal: AbortSignal.timeout(3e4) });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    return new BrowserAssetCatalog(await response.json(), application.replace(/\.dll$/, ""), base);
+  } catch (error) {
+    throw new Error(`Unable to load MAUI asset catalog at ${url.href}: ${String(error)}`);
+  }
+}
 
-// src/Wasm.FluentUIWebComponents/web/components/define.ts
-customElements.define("maui-scroll-view", MauiScrollView);
-
-// src/Wasm.FluentUIWebComponents/web/maui-browser.ts
+// src/Browser.FluentUIWebComponents/web/maui-browser.ts
 var applicationActive = false;
 async function startMaui(dotnet, mainAssembly, element = document.getElementById("app")) {
   if (applicationActive) {
@@ -7738,16 +8134,17 @@ async function startMaui(dotnet, mainAssembly, element = document.getElementById
     if (!element) {
       throw new Error("MAUI app element was not found");
     }
-    bridge = new DomBrowserBridge(element, getApi, onError);
+    const assets = await loadBrowserAssets(mainAssembly, import.meta.url);
+    bridge = new DomBrowserBridge(element, getApi, onError, assets);
     await initializeFluent();
     const runtime = await dotnet.withMainAssembly(mainAssembly).create();
-    runtime.setModuleImports("maui-browser", bridge.imports);
-    api = resolveBrowserExports(await runtime.getAssemblyExports("Microsoft.Maui.Platforms.Wasm.FluentUIWebComponents.dll"));
+    runtime.setModuleImports(BrowserModuleName, bridge.imports);
+    api = resolveBrowserApplicationExports(await runtime.getAssemblyExports(BrowserApplicationAssemblyName));
+    ownsApplication = true;
     const exitCode = await runtime.runMain(mainAssembly, []);
     if (exitCode !== 0) {
       throw new Error(`MAUI Main exited with code ${exitCode}`);
     }
-    ownsApplication = true;
     element.dataset.state = "ready";
     return { dispose };
   } catch (error) {
