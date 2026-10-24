@@ -1,7 +1,7 @@
 // src/Browser.FluentUIWebComponents/web/generated/contracts.g.ts
 var BrowserModuleName = "maui-browser";
 var BrowserApplicationAssemblyName = "Microsoft.Maui.Platforms.Browser.FluentUIWebComponents.dll";
-var exportMethods = ["AnimationTick", "LayoutTick", "OnClick", "OnImageLoaded", "OnInput", "OnInputCompleted", "OnInputFocus", "OnInputSelection", "OnScroll", "OnSystemThemeChanged", "RunScheduled", "Shutdown"];
+var exportMethods = ["AnimationTick", "LayoutTick", "OnClick", "OnImageLoaded", "OnInput", "OnInputCompleted", "OnInputFocus", "OnInputSelection", "OnPickerFocus", "OnPickerOpen", "OnPickerSelection", "OnScroll", "OnSwitchChanged", "OnSwitchFocus", "OnSystemThemeChanged", "RunScheduled", "Shutdown"];
 function isRecord(value) {
   return typeof value === "object" && value !== null;
 }
@@ -104,11 +104,11 @@ var emptyArray = Object.freeze([]);
 function createTypeRegistry() {
   const typeToDefinition = /* @__PURE__ */ new Map();
   return Object.freeze({
-    register(definition5) {
-      if (typeToDefinition.has(definition5.type)) {
+    register(definition9) {
+      if (typeToDefinition.has(definition9.type)) {
         return false;
       }
-      typeToDefinition.set(definition5.type, definition5);
+      typeToDefinition.set(definition9.type, definition9);
       return true;
     },
     getByType(key) {
@@ -685,7 +685,7 @@ var defaultPolicy = Object.freeze({
   createHTML(value) {
     return fastTrustedType.createHTML(value);
   },
-  protect(tagName5, aspect, aspectName, sink) {
+  protect(tagName9, aspect, aspectName, sink) {
     return sink;
   }
 });
@@ -898,8 +898,8 @@ function attr(configOrTarget, prop) {
 
 // node_modules/@microsoft/fast-element/dist/esm/styles/element-styles.js
 var DefaultStyleStrategy;
-function reduceStyles(styles6) {
-  return styles6.reduce((reduced, current) => {
+function reduceStyles(styles10) {
+  return styles10.reduce((reduced, current) => {
     if (current instanceof ElementStyles) {
       reduced.push(...reduceStyles(current.styles));
     } else {
@@ -925,8 +925,8 @@ var ElementStyles = class _ElementStyles {
    * Creates an instance of ElementStyles.
    * @param styles - The styles that will be associated with elements.
    */
-  constructor(styles6) {
-    this.styles = styles6;
+  constructor(styles10) {
+    this.styles = styles10;
     this.targets = /* @__PURE__ */ new WeakSet();
     this._strategy = null;
   }
@@ -964,16 +964,16 @@ var ElementStyles = class _ElementStyles {
    * @param styles - The style options to normalize.
    * @returns A singular ElementStyles instance or undefined.
    */
-  static normalize(styles6) {
-    return styles6 === void 0 ? void 0 : Array.isArray(styles6) ? new _ElementStyles(styles6) : styles6 instanceof _ElementStyles ? styles6 : new _ElementStyles([styles6]);
+  static normalize(styles10) {
+    return styles10 === void 0 ? void 0 : Array.isArray(styles10) ? new _ElementStyles(styles10) : styles10 instanceof _ElementStyles ? styles10 : new _ElementStyles([styles10]);
   }
 };
 ElementStyles.supportsAdoptedStyleSheets = Array.isArray(document.adoptedStyleSheets) && "replace" in CSSStyleSheet.prototype;
 function createAdoptedSheetsStrategy() {
   const cache = /* @__PURE__ */ new Map();
   return class FallbackAdoptedSheetsStrategy {
-    constructor(styles6) {
-      this.sheets = styles6.map((x) => {
+    constructor(styles10) {
+      this.sheets = styles10.map((x) => {
         if (x instanceof CSSStyleSheet) {
           return x;
         }
@@ -999,8 +999,8 @@ function createAdoptedSheetsStrategy() {
 var fallbackStyleId = 0;
 function createStyleElementStrategy() {
   return class FallbackStyleElementStrategy {
-    constructor(styles6) {
-      this.styles = styles6;
+    constructor(styles10) {
+      this.styles = styles10;
       this.styleClass = `fast-${++fallbackStyleId}`;
     }
     addStylesTo(target) {
@@ -1014,9 +1014,9 @@ function createStyleElementStrategy() {
     }
     removeStylesFrom(target) {
       const t = target === document ? document.body : target;
-      const styles6 = t.querySelectorAll(`.${this.styleClass}`);
-      for (let i = 0, ii = styles6.length; i < ii; ++i) {
-        t.removeChild(styles6[i]);
+      const styles10 = t.querySelectorAll(`.${this.styleClass}`);
+      for (let i = 0, ii = styles10.length; i < ii; ++i) {
+        t.removeChild(styles10[i]);
       }
     }
   };
@@ -1029,15 +1029,15 @@ var typeRegistry = createTypeRegistry();
 var definitionInstances = /* @__PURE__ */ new WeakMap();
 var instanceRefs = /* @__PURE__ */ new WeakMap();
 var fastElementRegistry = Object.freeze({
-  register(definition5) {
-    if (!typeRegistry.register(definition5)) {
+  register(definition9) {
+    if (!typeRegistry.register(definition9)) {
       return false;
     }
-    const registeredTypes = getRegisteredTypes(definition5.registry);
-    if (!Object.prototype.hasOwnProperty.call(registeredTypes, definition5.name)) {
-      Observable.defineProperty(registeredTypes, definition5.name);
+    const registeredTypes = getRegisteredTypes(definition9.registry);
+    if (!Object.prototype.hasOwnProperty.call(registeredTypes, definition9.name)) {
+      Observable.defineProperty(registeredTypes, definition9.name);
     }
-    registeredTypes[definition5.name] = definition5.type;
+    registeredTypes[definition9.name] = definition9.type;
     return true;
   },
   getByType: typeRegistry.getByType,
@@ -1063,46 +1063,46 @@ function whenRegistered(name, registry3 = customElements) {
   if (!Object.prototype.hasOwnProperty.call(registeredTypes, name)) {
     Observable.defineProperty(registeredTypes, name);
   }
-  const definition5 = getDefinitionForType(registeredTypes[name]);
-  if (definition5 !== void 0) {
-    return Promise.resolve(definition5);
+  const definition9 = getDefinitionForType(registeredTypes[name]);
+  if (definition9 !== void 0) {
+    return Promise.resolve(definition9);
   }
   return new Promise((resolve) => {
     const notifier = Observable.getNotifier(registeredTypes);
     const subscriber = {
       handleChange: () => {
-        const definition6 = getDefinitionForType(registeredTypes[name]);
-        if (definition6 === void 0) {
+        const definition10 = getDefinitionForType(registeredTypes[name]);
+        if (definition10 === void 0) {
           return;
         }
         notifier.unsubscribe(subscriber, name);
-        resolve(definition6);
+        resolve(definition10);
       }
     };
     notifier.subscribe(subscriber, name);
   });
 }
-function trackFASTElementInstance(definition5, instance) {
+function trackFASTElementInstance(definition9, instance) {
   if (instanceRefs.has(instance)) {
     return false;
   }
-  let instances = definitionInstances.get(definition5);
+  let instances = definitionInstances.get(definition9);
   const isFirstInstance = instances === void 0;
   if (instances === void 0) {
     instances = /* @__PURE__ */ new Set();
-    definitionInstances.set(definition5, instances);
+    definitionInstances.set(definition9, instances);
   }
   const ref2 = new WeakRef(instance);
   instances.add(ref2);
   instanceRefs.set(instance, ref2);
   return isFirstInstance;
 }
-function trackedFASTElementInstances(definition5, callback) {
-  const instances = definitionInstances.get(definition5);
+function trackedFASTElementInstances(definition9, callback) {
+  const instances = definitionInstances.get(definition9);
   if (instances === void 0) {
     return;
   }
-  definitionInstances.delete(definition5);
+  definitionInstances.delete(definition9);
   for (const ref2 of instances) {
     const instance = ref2.deref();
     if (instance !== void 0) {
@@ -1126,23 +1126,23 @@ function isFASTElementTemplateResolver(value) {
 function isPromiseLike(value) {
   return typeof (value === null || value === void 0 ? void 0 : value.then) === "function";
 }
-function finalizeResolvedTemplate(definition5, template5) {
-  pendingTemplateResolutions.delete(definition5);
-  if (definition5.template === void 0 && template5 !== void 0) {
-    definition5.template = template5;
+function finalizeResolvedTemplate(definition9, template9) {
+  pendingTemplateResolutions.delete(definition9);
+  if (definition9.template === void 0 && template9 !== void 0) {
+    definition9.template = template9;
   }
-  if (definition5.template !== void 0) {
-    templateResolutionErrors.delete(definition5);
-    templateResolvers.delete(definition5);
-    return definition5.template;
+  if (definition9.template !== void 0) {
+    templateResolutionErrors.delete(definition9);
+    templateResolvers.delete(definition9);
+    return definition9.template;
   }
   return void 0;
 }
-function applyFASTElementExtensions(definition5, registry3 = definition5.registry, extensions) {
+function applyFASTElementExtensions(definition9, registry3 = definition9.registry, extensions) {
   if (!(extensions === null || extensions === void 0 ? void 0 : extensions.length)) {
     return;
   }
-  const typedDefinition = definition5;
+  const typedDefinition = definition9;
   let registries = extensionRegistries.get(typedDefinition);
   if (registries === null || registries === void 0 ? void 0 : registries.has(registry3)) {
     return;
@@ -1153,47 +1153,47 @@ function applyFASTElementExtensions(definition5, registry3 = definition5.registr
   }
   registries.add(registry3);
   for (const extension of extensions) {
-    extension(definition5);
+    extension(definition9);
   }
 }
-function getLateAttributeLookup(definition5) {
+function getLateAttributeLookup(definition9) {
   var _a2;
-  return (_a2 = lateAttributeLookups.get(definition5)) !== null && _a2 !== void 0 ? _a2 : null;
+  return (_a2 = lateAttributeLookups.get(definition9)) !== null && _a2 !== void 0 ? _a2 : null;
 }
-function resolveFASTElementTemplate(definition5) {
-  if (definition5.template !== void 0) {
-    templateResolutionErrors.delete(definition5);
-    return definition5.template;
+function resolveFASTElementTemplate(definition9) {
+  if (definition9.template !== void 0) {
+    templateResolutionErrors.delete(definition9);
+    return definition9.template;
   }
-  const pendingResolution = pendingTemplateResolutions.get(definition5);
+  const pendingResolution = pendingTemplateResolutions.get(definition9);
   if (pendingResolution) {
     return pendingResolution;
   }
-  const templateResolver = templateResolvers.get(definition5);
+  const templateResolver = templateResolvers.get(definition9);
   if (!templateResolver) {
     return void 0;
   }
-  templateResolutionErrors.delete(definition5);
-  let template5;
+  templateResolutionErrors.delete(definition9);
+  let template9;
   try {
-    template5 = templateResolver(definition5);
+    template9 = templateResolver(definition9);
   } catch (error) {
-    templateResolutionErrors.set(definition5, error);
+    templateResolutionErrors.set(definition9, error);
     throw error;
   }
-  if (isPromiseLike(template5)) {
-    const resolution = Promise.resolve(template5).then((resolvedTemplate) => finalizeResolvedTemplate(definition5, resolvedTemplate)).catch((error) => {
-      pendingTemplateResolutions.delete(definition5);
-      templateResolutionErrors.set(definition5, error);
+  if (isPromiseLike(template9)) {
+    const resolution = Promise.resolve(template9).then((resolvedTemplate) => finalizeResolvedTemplate(definition9, resolvedTemplate)).catch((error) => {
+      pendingTemplateResolutions.delete(definition9);
+      templateResolutionErrors.set(definition9, error);
       throw error;
     });
-    pendingTemplateResolutions.set(definition5, resolution);
+    pendingTemplateResolutions.set(definition9, resolution);
     return resolution;
   }
-  return finalizeResolvedTemplate(definition5, template5);
+  return finalizeResolvedTemplate(definition9, template9);
 }
-function setFASTElementTemplateError(definition5, error) {
-  const typedDefinition = definition5;
+function setFASTElementTemplateError(definition9, error) {
+  const typedDefinition = definition9;
   if (error === void 0) {
     templateResolutionErrors.delete(typedDefinition);
     return;
@@ -1259,8 +1259,8 @@ var FASTElementDefinition = class _FASTElementDefinition {
     if (!registry3.get(this.name)) {
       applyFASTElementExtensions(this, registry3, extensions);
       if (this.template === void 0 && templateResolvers.has(this)) {
-        void Promise.resolve().then(() => resolveFASTElementTemplate(this)).then((template5) => {
-          if (template5 !== void 0 && !registry3.get(this.name)) {
+        void Promise.resolve().then(() => resolveFASTElementTemplate(this)).then((template9) => {
+          if (template9 !== void 0 && !registry3.get(this.name)) {
             this.platformDefined = true;
             registry3.define(this.name, type, this.elementOptions);
           }
@@ -1282,9 +1282,9 @@ var FASTElementDefinition = class _FASTElementDefinition {
    * that describes the element to define.
    */
   static compose(type, nameOrDef) {
-    const definition5 = fastElementBaseTypes.has(type) || fastElementRegistry.getByType(type) ? new _FASTElementDefinition(class extends type {
+    const definition9 = fastElementBaseTypes.has(type) || fastElementRegistry.getByType(type) ? new _FASTElementDefinition(class extends type {
     }, nameOrDef) : new _FASTElementDefinition(type, nameOrDef);
-    return Promise.resolve(definition5);
+    return Promise.resolve(definition9);
   }
   /**
    * Registers a FASTElement base type.
@@ -1360,11 +1360,11 @@ var ElementController = class _ElementController {
   get template() {
     var _a2;
     if (this._template === null) {
-      const definition5 = this.definition;
+      const definition9 = this.definition;
       if (this.source.resolveTemplate) {
         this._template = this.source.resolveTemplate();
-      } else if (definition5.template) {
-        this._template = (_a2 = definition5.template) !== null && _a2 !== void 0 ? _a2 : null;
+      } else if (definition9.template) {
+        this._template = (_a2 = definition9.template) !== null && _a2 !== void 0 ? _a2 : null;
       }
     }
     return this._template;
@@ -1405,11 +1405,11 @@ var ElementController = class _ElementController {
   get mainStyles() {
     var _a2;
     if (this._mainStyles === null) {
-      const definition5 = this.definition;
+      const definition9 = this.definition;
       if (this.source.resolveStyles) {
         this._mainStyles = this.source.resolveStyles();
-      } else if (definition5.styles) {
-        this._mainStyles = (_a2 = definition5.styles) !== null && _a2 !== void 0 ? _a2 : null;
+      } else if (definition9.styles) {
+        this._mainStyles = (_a2 = definition9.styles) !== null && _a2 !== void 0 ? _a2 : null;
       }
     }
     return this._mainStyles;
@@ -1433,7 +1433,7 @@ var ElementController = class _ElementController {
    * controller in how to handle rendering and other platform integrations.
    * @internal
    */
-  constructor(element, definition5) {
+  constructor(element, definition9) {
     this.boundObservables = null;
     this.needsInitialization = true;
     this.hasExistingShadowRoot = false;
@@ -1453,8 +1453,8 @@ var ElementController = class _ElementController {
     this.view = null;
     this._notifier = new PropertyChangeNotifier(element);
     this.source = element;
-    this.definition = definition5;
-    this.shadowOptions = definition5.shadowOptions;
+    this.definition = definition9;
+    this.shadowOptions = definition9.shadowOptions;
     const prototype = Reflect.getPrototypeOf(element);
     const accessors = prototype === null ? [] : Observable.getAccessors(prototype);
     if (accessors.length > 0) {
@@ -1556,34 +1556,34 @@ var ElementController = class _ElementController {
    * Adds styles to this element. Providing an HTMLStyleElement will attach the element instance to the shadowRoot.
    * @param styles - The styles to add.
    */
-  addStyles(styles6) {
+  addStyles(styles10) {
     var _a2;
-    if (!styles6) {
+    if (!styles10) {
       return;
     }
     const source = this.source;
-    if (styles6 instanceof HTMLElement) {
+    if (styles10 instanceof HTMLElement) {
       const target = (_a2 = getShadowRoot(source)) !== null && _a2 !== void 0 ? _a2 : this.source;
-      target.append(styles6);
-    } else if (!styles6.isAttachedTo(source)) {
-      styles6.addStylesTo(source);
+      target.append(styles10);
+    } else if (!styles10.isAttachedTo(source)) {
+      styles10.addStylesTo(source);
     }
   }
   /**
    * Removes styles from this element. Providing an HTMLStyleElement will detach the element instance from the shadowRoot.
    * @param styles - the styles to remove.
    */
-  removeStyles(styles6) {
+  removeStyles(styles10) {
     var _a2;
-    if (!styles6) {
+    if (!styles10) {
       return;
     }
     const source = this.source;
-    if (styles6 instanceof HTMLElement) {
+    if (styles10 instanceof HTMLElement) {
       const target = (_a2 = getShadowRoot(source)) !== null && _a2 !== void 0 ? _a2 : source;
-      target.removeChild(styles6);
-    } else if (styles6.isAttachedTo(source)) {
-      styles6.removeStylesFrom(source);
+      target.removeChild(styles10);
+    } else if (styles10.isAttachedTo(source)) {
+      styles10.removeStylesFrom(source);
     }
   }
   /**
@@ -1785,7 +1785,7 @@ var ElementController = class _ElementController {
    * @remarks
    * If `null` is provided, any existing view will be removed.
    */
-  renderTemplate(template5) {
+  renderTemplate(template9) {
     var _a2;
     const element = this.source;
     const host = (_a2 = getShadowRoot(element)) !== null && _a2 !== void 0 ? _a2 : element;
@@ -1799,14 +1799,14 @@ var ElementController = class _ElementController {
         }
       }
     }
-    if (template5) {
+    if (template9) {
       const hasPrerenderedContent = this.hasExistingShadowRoot && this.needsInitialization;
       let didHydrate = false;
       if (hasPrerenderedContent && _ElementController.hydrationHook) {
-        didHydrate = _ElementController.hydrationHook(this, template5, element, host);
+        didHydrate = _ElementController.hydrationHook(this, template9, element, host);
       }
       if (!didHydrate) {
-        this.renderClientSide(template5, element, host);
+        this.renderClientSide(template9, element, host);
       }
       this._resolvePrerendered(hasPrerenderedContent);
       this._resolveHydrated(didHydrate);
@@ -1819,14 +1819,14 @@ var ElementController = class _ElementController {
    * Standard client-side render: clears any stale content, clones the
    * compiled fragment, binds, and appends to the host.
    */
-  renderClientSide(template5, element, host) {
+  renderClientSide(template9, element, host) {
     if (this.hasExistingShadowRoot) {
       for (let child = host.firstChild; child !== null; child = host.firstChild) {
         host.removeChild(child);
       }
       this.hasExistingShadowRoot = false;
     }
-    this.view = template5.render(element, host, element);
+    this.view = template9.render(element, host, element);
     this.view.sourceLifetime = SourceLifetime.coupled;
   }
   /**
@@ -1843,16 +1843,16 @@ var ElementController = class _ElementController {
     if (controller !== void 0 && !override) {
       return controller;
     }
-    const definition5 = FASTElementDefinition.getForInstance(element);
-    if (definition5 === void 0) {
+    const definition9 = FASTElementDefinition.getForInstance(element);
+    if (definition9 === void 0) {
       throw FAST.error(Message.missingElementDefinition);
     }
-    if (definition5.template === void 0 && trackFASTElementInstance(definition5, element)) {
-      const notifier = Observable.getNotifier(definition5);
+    if (definition9.template === void 0 && trackFASTElementInstance(definition9, element)) {
+      const notifier = Observable.getNotifier(definition9);
       const subscriber = {
         handleChange: () => {
           notifier.unsubscribe(subscriber, "template");
-          trackedFASTElementInstances(definition5, (tracked) => {
+          trackedFASTElementInstances(definition9, (tracked) => {
             const trackedElement = tracked;
             _ElementController.forCustomElement(trackedElement, true);
             if (trackedElement.isConnected) {
@@ -1863,7 +1863,7 @@ var ElementController = class _ElementController {
       };
       notifier.subscribe(subscriber, "template");
     }
-    return element.$fastController = new elementControllerStrategy(element, definition5);
+    return element.$fastController = new elementControllerStrategy(element, definition9);
   }
   /**
    * Sets the strategy that ElementController.forCustomElement uses to construct
@@ -1893,9 +1893,9 @@ function normalizeStyleTarget(target) {
   }
 }
 var AdoptedStyleSheetsStrategy = class _AdoptedStyleSheetsStrategy {
-  constructor(styles6) {
+  constructor(styles10) {
     const styleSheetCache = _AdoptedStyleSheetsStrategy.styleSheetCache;
-    this.sheets = styles6.map((x) => {
+    this.sheets = styles10.map((x) => {
       if (x instanceof CSSStyleSheet) {
         return x;
       }
@@ -1922,26 +1922,26 @@ function usableStyleTarget(target) {
   return target === document ? document.body : target;
 }
 var StyleElementStrategy = class {
-  constructor(styles6) {
-    this.styles = styles6;
+  constructor(styles10) {
+    this.styles = styles10;
     this.styleClass = nextStyleId();
   }
   addStylesTo(target) {
     target = usableStyleTarget(normalizeStyleTarget(target));
-    const styles6 = this.styles;
+    const styles10 = this.styles;
     const styleClass = this.styleClass;
-    for (let i = 0; i < styles6.length; i++) {
+    for (let i = 0; i < styles10.length; i++) {
       const element = document.createElement("style");
-      element.innerHTML = styles6[i];
+      element.innerHTML = styles10[i];
       element.className = styleClass;
       target.append(element);
     }
   }
   removeStylesFrom(target) {
     target = usableStyleTarget(normalizeStyleTarget(target));
-    const styles6 = target.querySelectorAll(`.${this.styleClass}`);
-    for (let i = 0, ii = styles6.length; i < ii; ++i) {
-      target.removeChild(styles6[i]);
+    const styles10 = target.querySelectorAll(`.${this.styleClass}`);
+    for (let i = 0, ii = styles10.length; i < ii; ++i) {
+      target.removeChild(styles10[i]);
     }
   }
 };
@@ -2007,9 +2007,9 @@ function define(type, nameOrDef, extensions) {
   const composePromise = isFunction(type) ? FASTElementDefinition.compose(type, nameOrDef) : FASTElementDefinition.compose(this, type);
   return composePromise.then((def) => {
     applyFASTElementExtensions(def, def.registry, extensions);
-    const template5 = resolveFASTElementTemplate(def);
-    if (isPromiseLike2(template5)) {
-      return template5.then(() => def.define().type);
+    const template9 = resolveFASTElementTemplate(def);
+    if (isPromiseLike2(template9)) {
+      return template9.then(() => def.define().type);
     }
     return def.define().type;
   });
@@ -2032,6 +2032,16 @@ var FASTElement = Object.assign(createFASTElement(HTMLElement), {
    */
   define
 });
+
+// node_modules/@microsoft/fast-element/dist/esm/observation/volatile.js
+function volatile(target, name, descriptor) {
+  return Object.assign({}, descriptor, {
+    get() {
+      Observable.trackVolatile();
+      return descriptor.get.apply(this);
+    }
+  });
+}
 
 // node_modules/@microsoft/fast-element/dist/esm/styles/css-directive.js
 var registry = createTypeRegistry();
@@ -2058,7 +2068,7 @@ var CSSDirective = Object.freeze({
 
 // node_modules/@microsoft/fast-element/dist/esm/styles/css.js
 function collectStyles(strings, values) {
-  const styles6 = [];
+  const styles10 = [];
   let cssString = "";
   for (let i = 0, ii = strings.length - 1; i < ii; ++i) {
     cssString += strings[i];
@@ -2068,26 +2078,26 @@ function collectStyles(strings, values) {
     }
     if (value instanceof ElementStyles || value instanceof CSSStyleSheet) {
       if (cssString.trim() !== "") {
-        styles6.push(cssString);
+        styles10.push(cssString);
         cssString = "";
       }
-      styles6.push(value);
+      styles10.push(value);
     } else {
       cssString += value;
     }
   }
   cssString += strings[strings.length - 1];
   if (cssString.trim() !== "") {
-    styles6.push(cssString);
+    styles10.push(cssString);
   }
-  return styles6;
+  return styles10;
 }
 var css = ((strings, ...values) => {
   return new ElementStyles(collectStyles(strings, values));
 });
 var CSSPartial = class {
-  constructor(styles6) {
-    this.value = styles6.length === 0 ? "" : styles6.length === 1 ? styles6[0] : new ElementStyles(styles6);
+  constructor(styles10) {
+    this.value = styles10.length === 0 ? "" : styles10.length === 1 ? styles10[0] : new ElementStyles(styles10);
   }
   createCSS() {
     return this.value;
@@ -2256,6 +2266,8 @@ var StatelessAttachedAttributeDirective = class {
 makeSerializationNoop(StatelessAttachedAttributeDirective);
 
 // node_modules/@microsoft/fast-element/dist/esm/templating/node-observation.js
+var selectElements = (value) => value.nodeType === 1;
+var elements = (selector) => selector ? (value) => value.nodeType === 1 && value.matches(selector) : selectElements;
 var NodeObservationDirective = class extends StatelessAttachedAttributeDirective {
   /**
    * The unique id of the factory.
@@ -3331,7 +3343,7 @@ var CompilationContext = class {
     this.descriptors = {};
     this.factories = [];
   }
-  addFactory(factory, parentId, nodeId, targetIndex, tagName5) {
+  addFactory(factory, parentId, nodeId, targetIndex, tagName9) {
     var _a2, _b;
     if (!this.nodeIds.has(nodeId)) {
       this.nodeIds.add(nodeId);
@@ -3339,7 +3351,7 @@ var CompilationContext = class {
     }
     factory.id = (_a2 = factory.id) !== null && _a2 !== void 0 ? _a2 : nextId();
     factory.targetNodeId = nodeId;
-    factory.targetTagName = tagName5;
+    factory.targetTagName = tagName9;
     factory.policy = (_b = factory.policy) !== null && _b !== void 0 ? _b : this.policy;
     this.factories.push(factory);
   }
@@ -3498,26 +3510,26 @@ var Compiler = {
    * @public
    */
   compile(html2, factories, policy = DOM.policy) {
-    let template5;
+    let template9;
     if (isString(html2)) {
-      template5 = document.createElement(templateTag);
-      template5.innerHTML = policy.createHTML(html2);
-      const fec = template5.content.firstElementChild;
+      template9 = document.createElement(templateTag);
+      template9.innerHTML = policy.createHTML(html2);
+      const fec = template9.content.firstElementChild;
       if (fec !== null && fec.tagName === templateTag) {
-        template5 = fec;
+        template9 = fec;
       }
     } else {
-      template5 = html2;
+      template9 = html2;
     }
-    if (!template5.content.firstChild && !template5.content.lastChild) {
-      template5.content.appendChild(document.createComment(""));
+    if (!template9.content.firstChild && !template9.content.lastChild) {
+      template9.content.appendChild(document.createComment(""));
     }
-    const fragment = document.adoptNode(template5.content);
+    const fragment = document.adoptNode(template9.content);
     const context = new CompilationContext(fragment, factories, policy);
     compileAttributes(
       context,
       "",
-      template5,
+      template9,
       /* host */
       "h",
       0,
@@ -3631,8 +3643,8 @@ var InlineTemplateDirective = class {
 };
 InlineTemplateDirective.empty = new InlineTemplateDirective("");
 HTMLDirective.define(InlineTemplateDirective);
-function createHTML2(value, prevString, add, definition5 = HTMLDirective.getForInstance(value)) {
-  if (definition5.aspected) {
+function createHTML2(value, prevString, add, definition9 = HTMLDirective.getForInstance(value)) {
+  if (definition9.aspected) {
     const match = lastAttributeNameRegex.exec(prevString);
     if (match !== null) {
       HTMLDirective.assignAspect(value, match[2]);
@@ -3749,17 +3761,17 @@ var ViewTemplate = class _ViewTemplate {
     for (let i = 0, ii = strings.length - 1; i < ii; ++i) {
       const currentString = strings[i];
       let currentValue = values[i];
-      let definition5;
+      let definition9;
       html2 += currentString;
       if (isFunction(currentValue)) {
         currentValue = new HTMLBindingDirective(oneWay(currentValue));
       } else if (currentValue instanceof Binding) {
         currentValue = new HTMLBindingDirective(currentValue);
-      } else if (!(definition5 = HTMLDirective.getForInstance(currentValue))) {
+      } else if (!(definition9 = HTMLDirective.getForInstance(currentValue))) {
         const staticValue = currentValue;
         currentValue = new HTMLBindingDirective(oneTime(() => staticValue));
       }
-      html2 += createHTML2(currentValue, currentString, add, definition5);
+      html2 += createHTML2(currentValue, currentString, add, definition9);
     }
     return new _ViewTemplate(html2 + strings[strings.length - 1], factories, policy);
   }
@@ -6321,6 +6333,1575 @@ var BrowserFonts = class {
   }
 };
 
+// node_modules/@fluentui/web-components/dist/esm/listbox/listbox.options.js
+function isListbox(element, tagName9 = "-listbox") {
+  if (element?.nodeType !== Node.ELEMENT_NODE) {
+    return false;
+  }
+  return element.tagName.toLowerCase().endsWith(tagName9);
+}
+var tagName2 = `${FluentDesignSystem.prefix}-listbox`;
+
+// node_modules/@fluentui/web-components/dist/esm/option/option.options.js
+function isDropdownOption(value, tagName9 = "-option") {
+  if (value?.nodeType !== Node.ELEMENT_NODE) {
+    return false;
+  }
+  return value.tagName.toLowerCase().endsWith(tagName9);
+}
+var tagName3 = `${FluentDesignSystem.prefix}-option`;
+
+// node_modules/@fluentui/web-components/dist/esm/utils/direction.js
+var Direction = {
+  ltr: "ltr",
+  rtl: "rtl"
+};
+var getDirection = (rootNode) => {
+  return rootNode.closest("[dir]")?.dir === "rtl" ? Direction.rtl : Direction.ltr;
+};
+
+// node_modules/@fluentui/web-components/dist/esm/utils/support.js
+var AnchorPositioningCSSSupported = CSS.supports("anchor-name: --a");
+var AnchorPositioningHTMLSupported = "anchor" in HTMLElement.prototype;
+var CustomStatesSetSupported = CSS.supports("selector(:state(g))");
+
+// node_modules/@fluentui/web-components/dist/esm/utils/element-internals.js
+var statesMap = /* @__PURE__ */ new Map();
+function stateSelector(state) {
+  return statesMap.get(state) ?? statesMap.set(state, CustomStatesSetSupported ? `:state(${state})` : `[state--${state}]`).get(state);
+}
+function toggleState(elementInternals, state, force) {
+  if (!state || !elementInternals) {
+    return;
+  }
+  if (!CustomStatesSetSupported) {
+    elementInternals.shadowRoot.host.toggleAttribute(`state--${state}`, force);
+    return;
+  }
+  if (force ?? !elementInternals.states.has(state)) {
+    elementInternals.states.add(state);
+    return;
+  }
+  elementInternals.states.delete(state);
+}
+
+// node_modules/@fluentui/web-components/dist/esm/utils/language.js
+function getLanguage(rootNode) {
+  return rootNode.closest("[lang]")?.lang ?? "en";
+}
+
+// node_modules/@fluentui/web-components/dist/esm/utils/request-idle-callback.js
+function requestIdleCallback(callback, options) {
+  if ("requestIdleCallback" in globalThis) {
+    return globalThis.requestIdleCallback(callback, options);
+  }
+  const start = Date.now();
+  return setTimeout(() => {
+    callback({
+      didTimeout: options?.timeout ? Date.now() - start >= options.timeout : false,
+      timeRemaining: () => 0
+    });
+  }, options?.timeout ?? 1);
+}
+function waitForConnectedDescendants(target, callback, options) {
+  const shallow = options?.shallow ?? false;
+  const timeout = options?.timeout ?? 50;
+  const useIdleCallback = options?.idleCallback ?? false;
+  const selector = `${shallow ? ":scope > " : ""}:not(:defined)`;
+  const scheduleCheck = (deadline) => {
+    if (target.querySelector(selector) === null || deadline && deadline.timeRemaining() <= 0) {
+      if (useIdleCallback) {
+        requestIdleCallback(callback, { timeout });
+      } else {
+        callback();
+      }
+      return;
+    }
+    requestIdleCallback(scheduleCheck, { timeout });
+  };
+  scheduleCheck();
+}
+
+// node_modules/@fluentui/web-components/dist/esm/dropdown/dropdown.options.js
+var DropdownAppearance = {
+  filledDarker: "filled-darker",
+  filledLighter: "filled-lighter",
+  outline: "outline",
+  transparent: "transparent"
+};
+var DropdownType = {
+  combobox: "combobox",
+  dropdown: "dropdown",
+  select: "select"
+};
+var tagName4 = `${FluentDesignSystem.prefix}-dropdown`;
+
+// node_modules/@fluentui/web-components/dist/esm/dropdown/dropdown.template.js
+var dropdownIndicatorTemplate = html`
+  <svg class="chevron-down-20-regular" aria-hidden="true" slot="indicator" viewBox="0 0 20 20" ${ref("indicator")}>
+    <path
+      d="M15.85 7.65a.5.5 0 0 1 0 .7l-5.46 5.49a.55.55 0 0 1-.78 0L4.15 8.35a.5.5 0 1 1 .7-.7L10 12.8l5.15-5.16a.5.5 0 0 1 .7 0"
+      fill="currentColor"
+    />
+  </svg>
+`;
+var dropdownInputTemplate = html`
+  <input
+    @input="${(x, c) => x.inputHandler(c.event)}"
+    @change="${(x, c) => x.changeHandler(c.event)}"
+    aria-activedescendant="${(x) => x.activeDescendant}"
+    aria-controls="${(x) => x.listbox?.id ?? null}"
+    aria-labelledby="${(x) => x.ariaLabelledBy}"
+    aria-expanded="${(x) => x.open}"
+    aria-haspopup="listbox"
+    placeholder="${(x) => x.placeholder}"
+    role="combobox"
+    ?disabled="${(x) => x.disabled}"
+    type="${(x) => x.type}"
+    value="${(x) => x.valueAttribute}"
+    slot="control"
+    ${ref("control")}
+  />
+`;
+var dropdownButtonTemplate = html`
+  <button
+    aria-activedescendant="${(x) => x.activeDescendant}"
+    aria-controls="${(x) => x.listbox?.id ?? null}"
+    aria-expanded="${(x) => x.open}"
+    aria-haspopup="listbox"
+    role="combobox"
+    ?disabled="${(x) => x.disabled}"
+    type="button"
+    slot="control"
+    ${ref("control")}
+  >
+    ${(x) => x.displayValue}
+  </button>
+`;
+function dropdownTemplate(options = {}) {
+  return html`
+    <template
+      @click="${(x, c) => x.clickHandler(c.event)}"
+      @focusout="${(x, c) => x.focusoutHandler(c.event)}"
+      @keydown="${(x, c) => x.keydownHandler(c.event)}"
+      @mousedown="${(x, c) => x.mousedownHandler(c.event)}"
+    >
+      <div class="control">
+        <slot name="control" ${ref("controlSlot")}></slot>
+        <slot name="indicator" ${ref("indicatorSlot")}>${staticallyCompose(options.indicator)}</slot>
+      </div>
+      <slot @slotchange="${(x, c) => x.slotchangeHandler(c.event)}"></slot>
+    </template>
+  `;
+}
+var template = dropdownTemplate({
+  indicator: dropdownIndicatorTemplate
+});
+
+// node_modules/@fluentui/web-components/dist/esm/dropdown/dropdown.base.js
+var BaseDropdown = class _BaseDropdown extends FASTElement {
+  /**
+   * The ID of the current active descendant.
+   *
+   * @public
+   */
+  get activeDescendant() {
+    if (this.open) {
+      return this.enabledOptions[this.activeIndex]?.id;
+    }
+    return void 0;
+  }
+  /**
+   * Sets the active index when the active index property changes.
+   *
+   * @param prev - the previous active index
+   * @param next - the current active index
+   * @internal
+   */
+  activeIndexChanged(prev, next2) {
+    if (typeof next2 === "number") {
+      const optionIndex = this.matches(":has(:focus-visible)") ? next2 : -1;
+      this.enabledOptions.forEach((option, index) => {
+        option.active = index === optionIndex;
+      });
+      if (this.open) {
+        this.enabledOptions[optionIndex]?.scrollIntoView({ block: "nearest" });
+      }
+    }
+  }
+  /**
+   * Updates properties on the control element when the control slot changes.
+   *
+   * @param prev - the previous control element
+   * @param next - the current control element
+   * @internal
+   * @remarks
+   * The control element is assigned to the dropdown via the control slot with manual slot assignment.
+   */
+  controlChanged(prev, next2) {
+    if (next2) {
+      next2.id = next2.id || uniqueId("input-");
+    }
+  }
+  /**
+   * Updates the disabled state of the options when the disabled property changes.
+   *
+   * @param prev - the previous disabled state
+   * @param next - the current disabled state
+   */
+  disabledChanged(prev, next2) {
+    if (this.listbox) {
+      Updates.enqueue(() => {
+        this.options.forEach((option) => {
+          option.disabled = option.disabledAttribute || this.disabled;
+        });
+      });
+    }
+  }
+  /**
+   * The display value for the control.
+   *
+   * @public
+   */
+  get displayValue() {
+    if (!this.$fastController.isConnected || !this.control || this.isCombobox && this.multiple) {
+      toggleState(this.elementInternals, "placeholder-shown", false);
+      return "";
+    }
+    this.listFormatter = this.listFormatter ?? new Intl.ListFormat(getLanguage(this), {
+      type: "conjunction",
+      style: "narrow"
+    });
+    const displayValue = this.listFormatter.format(this.selectedOptions.map((x) => x.text));
+    toggleState(this.elementInternals, "placeholder-shown", !displayValue);
+    if (this.isCombobox) {
+      return displayValue;
+    }
+    return displayValue || this.placeholder;
+  }
+  /**
+   * Updates properties on the listbox element when the listbox reference changes.
+   *
+   * @param prev - the previous listbox element
+   * @param next - the current listbox element
+   * @internal
+   *
+   * @remarks
+   * The listbox element is assigned to the dropdown via the default slot with manual slot assignment.
+   */
+  listboxChanged(prev, next2) {
+    if (prev) {
+      Observable.getNotifier(this).unsubscribe(prev);
+    }
+    if (next2) {
+      next2.dropdown = this;
+      next2.popover = "manual";
+      next2.tabIndex = -1;
+      const notifier = Observable.getNotifier(this);
+      notifier.subscribe(next2);
+      notifier.notify("multiple");
+      Updates.enqueue(() => {
+        this.options.forEach((option) => {
+          option.disabled = option.disabledAttribute || this.disabled;
+          option.name = this.name;
+        });
+        this.enabledOptions.filter((x) => x.defaultSelected).forEach((x, i) => {
+          x.selected = this.multiple || i === 0;
+        });
+        this.setValidity();
+      });
+      if (AnchorPositioningCSSSupported) {
+        const anchorName = uniqueId("--dropdown-anchor-");
+        this.style.setProperty("anchor-name", anchorName);
+        this.listbox.style.setProperty("position-anchor", anchorName);
+      }
+    }
+  }
+  /**
+   * Toggles between single and multiple selection modes when the `multiple` property changes.
+   *
+   * @param prev - the previous multiple state
+   * @param next - the next multiple state
+   * @internal
+   */
+  multipleChanged(prev, next2) {
+    this.elementInternals.ariaMultiSelectable = next2 ? "true" : "false";
+    toggleState(this.elementInternals, "multiple", next2);
+    this.value = null;
+  }
+  /**
+   * Updates the name of the options when the name property changes.
+   *
+   * @param prev - the previous name
+   * @param next - the current name
+   */
+  nameChanged(prev, next2) {
+    if (this.listbox) {
+      Updates.enqueue(() => {
+        this.options.forEach((option) => {
+          option.name = next2;
+        });
+      });
+    }
+  }
+  /**
+   * Handles the open state of the dropdown.
+   *
+   * @param prev - the previous open state
+   * @param next - the current open state
+   *
+   * @internal
+   */
+  openChanged(prev, next2) {
+    toggleState(this.elementInternals, "open", next2);
+    this.elementInternals.ariaExpanded = next2 ? "true" : "false";
+    this.activeIndex = this.selectedIndex ?? -1;
+    if (!AnchorPositioningCSSSupported) {
+      this.anchorPositionFallback(next2);
+    }
+  }
+  /**
+   * Changes the slotted control element based on the dropdown type.
+   *
+   * @param prev - the previous dropdown type
+   * @param next - the current dropdown type
+   * @internal
+   */
+  typeChanged(prev, next2) {
+    if (this.$fastController.isConnected) {
+      this.insertControl();
+    }
+  }
+  /**
+   * The collection of enabled options.
+   * @public
+   */
+  get enabledOptions() {
+    return this.listbox?.enabledOptions ?? Array.from(this.querySelectorAll("*")).filter((o) => isDropdownOption(o) && !o.disabled);
+  }
+  static {
+    this.formAssociated = true;
+  }
+  /**
+   * A reference to the first freeform option, if present.
+   *
+   * @internal
+   */
+  get freeformOption() {
+    return this.enabledOptions.find((x) => x.freeform);
+  }
+  /**
+   * Indicates whether the dropdown is a combobox.
+   *
+   * @internal
+   */
+  get isCombobox() {
+    return this.type === DropdownType.combobox;
+  }
+  /**
+   * A reference to all associated label elements.
+   *
+   * @public
+   */
+  get labels() {
+    return Object.freeze(Array.from(this.elementInternals.labels));
+  }
+  /**
+   * The collection of all child options.
+   *
+   * @public
+   */
+  get options() {
+    return this.listbox?.options ?? Array.from(this.querySelectorAll("*")).filter((o) => isDropdownOption(o));
+  }
+  /**
+   * The index of the first selected option, scoped to the enabled options.
+   *
+   * @internal
+   * @remarks
+   * This property is a reflection of {@link Listbox.selectedIndex}.
+   */
+  get selectedIndex() {
+    return this.enabledOptions.findIndex((x) => x.selected) ?? -1;
+  }
+  /**
+   * The collection of selected options.
+   *
+   * @public
+   * @remarks
+   * This property is a reflection of {@link Listbox.selectedOptions}.
+   */
+  get selectedOptions() {
+    return this.listbox?.selectedOptions ?? [];
+  }
+  /**
+   * The validation message. Uses the browser's default validation message for native checkboxes if not otherwise
+   * specified (e.g., via `setCustomValidity`).
+   *
+   * @internal
+   */
+  get validationMessage() {
+    if (this.elementInternals.validationMessage) {
+      return this.elementInternals.validationMessage;
+    }
+    if (!this._validationFallbackMessage) {
+      const validationMessageFallbackControl = document.createElement("input");
+      validationMessageFallbackControl.type = "radio";
+      validationMessageFallbackControl.name = "validation-message-fallback";
+      validationMessageFallbackControl.required = true;
+      validationMessageFallbackControl.checked = false;
+      this._validationFallbackMessage = validationMessageFallbackControl.validationMessage;
+    }
+    if (!this.disabled && this.required && this.listbox.selectedOptions.length === 0) {
+      return this._validationFallbackMessage;
+    }
+    return "";
+  }
+  /**
+   * The element's validity state.
+   *
+   * @public
+   * @remarks
+   * Reflects the {@link https://developer.mozilla.org/docs/Web/API/ElementInternals/validity | `ElementInternals.validity`} property.
+   */
+  get validity() {
+    return this.elementInternals.validity;
+  }
+  /**
+   * The current value of the selected option.
+   *
+   * @public
+   */
+  get value() {
+    Observable.notify(this, "value");
+    return this.enabledOptions.find((x) => x.selected)?.value ?? null;
+  }
+  set value(next2) {
+    if (this.multiple) {
+      return;
+    }
+    this.selectOption(this.enabledOptions.findIndex((x) => x.value === next2));
+    Observable.track(this, "value");
+  }
+  /**
+   * Determines if the control can be submitted for constraint validation.
+   *
+   * @public
+   * @remarks
+   * Reflects the {@link https://developer.mozilla.org/docs/Web/API/ElementInternals/willValidate | `ElementInternals.willValidate`} property.
+   */
+  get willValidate() {
+    return this.elementInternals.willValidate;
+  }
+  /**
+   * Handles the change events for the dropdown.
+   *
+   * @param e - the event object
+   *
+   * @public
+   */
+  changeHandler(e) {
+    if (this === e.target) {
+      return true;
+    }
+    const optionIndex = this.isCombobox ? this.enabledOptions.findIndex((x) => x.text === this.control.value) : this.enabledOptions.indexOf(e.target);
+    this.selectOption(optionIndex, true);
+    return true;
+  }
+  /**
+   * Checks the validity of the element and returns the result.
+   *
+   * @public
+   * @remarks
+   * Reflects the {@link https://developer.mozilla.org/docs/Web/API/ElementInternals/checkValidity | `HTMLInputElement.checkValidity()`} method.
+   */
+  checkValidity() {
+    return this.elementInternals.checkValidity();
+  }
+  /**
+   * Handles the click events for the dropdown.
+   *
+   * @param e - the event object
+   *
+   * @public
+   */
+  clickHandler(e) {
+    if (this.disabled) {
+      return;
+    }
+    const target = e.target;
+    this.focus();
+    if ((target === this.control || e.composedPath().includes(this.indicator)) && !this.isCombobox) {
+      this.listbox.togglePopover();
+      return true;
+    }
+    if (!this.open) {
+      this.listbox.showPopover();
+      return true;
+    }
+    if (isDropdownOption(target)) {
+      if (target.disabled) {
+        return;
+      }
+      this.selectOption(this.enabledOptions.indexOf(target), true);
+      if (!this.multiple) {
+        if (this.isCombobox) {
+          this.control.value = target.text;
+          this.updateFreeformOption();
+        }
+        this.listbox.hidePopover();
+      }
+    }
+    return true;
+  }
+  constructor() {
+    super();
+    this.activeIndex = 0;
+    this.id = uniqueId("dropdown-");
+    this.required = false;
+    this.type = DropdownType.dropdown;
+    this.valueAttribute = "";
+    this.repositionListbox = () => {
+      if (this.frameId) {
+        cancelAnimationFrame(this.frameId);
+      }
+      this.frameId = requestAnimationFrame(() => {
+        const controlRect = this.getBoundingClientRect();
+        const right = window.innerWidth - controlRect.right;
+        const left = controlRect.left;
+        this.listbox.style.minWidth = `${controlRect.width}px`;
+        this.listbox.style.top = `${controlRect.top}px`;
+        if (left + controlRect.width > window.innerWidth || getDirection(this) === "rtl" && right - controlRect.width > 0) {
+          this.listbox.style.right = `${right}px`;
+          this.listbox.style.left = "unset";
+        } else {
+          this.listbox.style.left = `${left}px`;
+          this.listbox.style.right = "unset";
+        }
+      });
+    };
+    this.elementInternals = this.attachInternals();
+    this._insertingControl = false;
+    this.searchTimeoutMs = 500;
+    this.searchString = "";
+    this.elementInternals.role = "presentation";
+  }
+  /**
+   * Filters the options based on the input value.
+   *
+   * @param value - the input value to filter the options by
+   * @param collection - the collection of options to filter
+   * @returns the filtered options
+   * @internal
+   */
+  filterOptions(value, collection = this.enabledOptions) {
+    if (!this.listCollator) {
+      this.listCollator = new Intl.Collator(getLanguage(this), { usage: "search", sensitivity: "base" });
+    }
+    return collection.filter((x) => {
+      return this.listCollator.compare(x.text.substring(0, Math.min(x.text.length, value.length)), value) === 0;
+    });
+  }
+  /**
+   * Focuses the control when the dropdown receives focus.
+   *
+   * @internal
+   */
+  focus(options) {
+    if (this.disabled) {
+      return;
+    }
+    this.control.focus(options);
+  }
+  /**
+   * Toggles the listbox when the control element loses focus.
+   *
+   * @param e - the focus event
+   * @internal
+   */
+  focusoutHandler(e) {
+    const relatedTarget = e.relatedTarget;
+    if (this.open && !this.contains(relatedTarget)) {
+      this.listbox.togglePopover();
+    }
+    return true;
+  }
+  /**
+   * Resets the form value to its initial value when the form is reset.
+   *
+   * @internal
+   */
+  formResetCallback() {
+    this.enabledOptions.forEach((x, i) => {
+      if (this.multiple) {
+        x.selected = !!x.defaultSelected;
+        return;
+      }
+      if (!x.defaultSelected) {
+        x.selected = false;
+        return;
+      }
+      this.selectOption(i);
+    });
+    this.setValidity();
+  }
+  /**
+   * Ensures the active index is within bounds of the enabled options. Out-of-bounds indices are wrapped to the opposite
+   * end of the range.
+   *
+   * @param index - the desired index
+   * @param upperBound - the upper bound of the range
+   * @returns the index in bounds
+   * @internal
+   */
+  getEnabledIndexInBounds(index, upperBound = this.enabledOptions.length || 0) {
+    if (upperBound === 0) {
+      return -1;
+    }
+    return (index + upperBound) % upperBound;
+  }
+  /**
+   * Handles the input events for the dropdown from the control element.
+   *
+   * @param e - the input event
+   * @public
+   */
+  inputHandler(e) {
+    if (!this.open) {
+      this.listbox.showPopover();
+    }
+    this.updateFreeformOption();
+    const controlValue = this.control.value;
+    const index = this.enabledOptions.indexOf(this.filterOptions(controlValue)[0] ?? null);
+    this.activeIndex = index;
+    return true;
+  }
+  /**
+   * Inserts the control element based on the dropdown type.
+   *
+   * @public
+   * @remarks
+   * This method can be overridden in derived classes to provide custom control elements, though this is not recommended.
+   */
+  insertControl() {
+    if (this._insertingControl) {
+      return;
+    }
+    this._insertingControl = true;
+    this.controlSlot?.assignedNodes().forEach((x) => this.removeChild(x));
+    if (this.type === DropdownType.combobox) {
+      dropdownInputTemplate.render(this, this);
+      return;
+    }
+    dropdownButtonTemplate.render(this, this);
+    this._insertingControl = false;
+  }
+  /**
+   * Handles printable character input by moving {@link Dropdown#activeIndex} to the next option whose label matches the
+   * accumulated search string. When the string is a single character (or the same character repeated), matching
+   * options are cycled through; otherwise the string is treated as a prefix match.
+   *
+   * @param char - the printable character that was pressed
+   * @internal
+   */
+  handleSearchCharacter(char) {
+    const isRepeating = this.searchString === char.repeat(this.searchString.length);
+    this.searchString += char;
+    let candidates = this.searchString.length > 1 ? this.filterOptions(this.searchString) : [];
+    let isCycling = false;
+    if (!candidates.length && isRepeating) {
+      candidates = this.filterOptions(char);
+      isCycling = true;
+    }
+    if (candidates.length) {
+      const activeOption = this.enabledOptions[this.activeIndex];
+      const currentPos = candidates.indexOf(activeOption);
+      const nextMatch = isCycling ? candidates[this.getEnabledIndexInBounds(currentPos + 1, candidates.length)] : currentPos >= 0 ? activeOption : candidates[0];
+      this.activeIndex = this.enabledOptions.indexOf(nextMatch);
+    }
+    clearTimeout(this.searchTimeout);
+    this.searchTimeout = setTimeout(() => {
+      this.searchString = "";
+      this.searchTimeout = void 0;
+    }, this.searchTimeoutMs);
+  }
+  /**
+   * Handles the keydown events for the dropdown.
+   *
+   * @param e - the keyboard event
+   * @public
+   */
+  keydownHandler(e) {
+    let increment = 0;
+    switch (e.key) {
+      case "ArrowUp": {
+        e.preventDefault();
+        increment = -1;
+        break;
+      }
+      case "ArrowDown": {
+        e.preventDefault();
+        increment = 1;
+        break;
+      }
+      case " ":
+      case "Enter":
+      case "Tab": {
+        if (e.key === " ") {
+          if (this.isCombobox) {
+            break;
+          }
+          e.preventDefault();
+        }
+        if (this.open) {
+          this.selectOption(this.activeIndex, true);
+          if (this.multiple) {
+            break;
+          }
+          this.listbox.hidePopover();
+          return e.key === "Tab";
+        }
+        this.listbox.showPopover();
+        break;
+      }
+      case "Escape": {
+        this.activeIndex = this.multiple ? 0 : this.selectedIndex;
+        this.listbox.hidePopover();
+        break;
+      }
+    }
+    if (!increment) {
+      if (!this.isCombobox && e.key.length === 1 && e.key !== " " && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        if (!this.open) {
+          this.listbox.showPopover();
+        }
+        this.handleSearchCharacter(e.key);
+      }
+      return true;
+    }
+    if (!this.open) {
+      this.listbox.showPopover();
+      return;
+    }
+    let nextIndex = this.activeIndex;
+    nextIndex += increment;
+    let indexInBounds = this.getEnabledIndexInBounds(nextIndex);
+    if (indexInBounds === 0 && this.freeformOption?.hidden) {
+      indexInBounds = this.getEnabledIndexInBounds(nextIndex + increment);
+    }
+    this.activeIndex = indexInBounds;
+    return true;
+  }
+  /**
+   * Prevents the default behavior of the mousedown event. This is necessary to prevent the input from losing focus
+   * when the dropdown is open.
+   *
+   * @param e - the mouse event
+   *
+   * @internal
+   */
+  mousedownHandler(e) {
+    if (this.disabled || e.target === this.control && !this.isCombobox) {
+      return;
+    }
+    return !isDropdownOption(e.target);
+  }
+  /**
+   * Reports the validity of the element.
+   *
+   * @public
+   * @remarks
+   * Reflects the {@link https://developer.mozilla.org/docs/Web/API/ElementInternals/reportValidity | `HTMLInputElement.reportValidity()`} method.
+   */
+  reportValidity() {
+    return this.elementInternals.reportValidity();
+  }
+  /**
+   * Selects an option by index.
+   *
+   * @param index - The index of the option to select.
+   * @public
+   */
+  selectOption(index = this.selectedIndex, shouldEmit = false) {
+    this.listbox.selectOption(index);
+    if (this.control) {
+      this.control.value = this.displayValue;
+    }
+    this.setValidity();
+    this.updateFreeformOption();
+    if (shouldEmit) {
+      this.$emit("change");
+    }
+  }
+  /**
+   * Sets the validity of the element.
+   *
+   * @param flags - Validity flags to set.
+   * @param message - Optional message to supply. If not provided, the element's `validationMessage` will be used.
+   * @param anchor - Optional anchor to use for the validation message.
+   *
+   * @internal
+   */
+  setValidity(flags, message, anchor2) {
+    if (!this.elementInternals) {
+      return;
+    }
+    if (this.disabled || !this.required) {
+      this.elementInternals.setValidity({});
+      return;
+    }
+    const valueMissing = this.required && this.listbox.selectedOptions.length === 0;
+    this.elementInternals.setValidity({ valueMissing, ...flags }, message ?? this.validationMessage, anchor2 ?? this.control);
+  }
+  /**
+   * Handles the `slotchange` event for the dropdown.
+   * Sets the `listbox` property when a valid listbox is assigned to the default slot.
+   *
+   * @param e - the slot change event
+   * @internal
+   */
+  slotchangeHandler(e) {
+    const target = e.target;
+    waitForConnectedDescendants(this, () => {
+      const listbox = target.assignedElements().find((el) => isListbox(el));
+      if (listbox) {
+        this.listbox = listbox;
+      }
+    });
+  }
+  /**
+   * Updates the freeform option with the provided value.
+   *
+   * @param value - the value to update the freeform option with
+   * @internal
+   */
+  updateFreeformOption(value = this.control.value) {
+    if (!this.freeformOption) {
+      return;
+    }
+    if (value === "" || this.filterOptions(value, this.enabledOptions.filter((x) => !x.freeform)).length) {
+      this.freeformOption.value = "";
+      this.freeformOption.selected = false;
+      this.freeformOption.hidden = true;
+      return;
+    }
+    this.freeformOption.value = value;
+    this.freeformOption.hidden = false;
+  }
+  connectedCallback() {
+    super.connectedCallback();
+    Updates.enqueue(() => {
+      this.insertControl();
+    });
+    maybeSetAutoFocus(this);
+  }
+  disconnectedCallback() {
+    _BaseDropdown.AnchorPositionFallbackObserver?.disconnect();
+    this.debounceController?.abort();
+    if (this.searchTimeout) {
+      clearTimeout(this.searchTimeout);
+      this.searchTimeout = void 0;
+      this.searchString = "";
+    }
+    super.disconnectedCallback();
+  }
+  /**
+   * When anchor positioning isn't supported, an intersection observer is used to flip the listbox when it hits the
+   * viewport bounds. One static observer is used for all dropdowns.
+   *
+   * @internal
+   */
+  anchorPositionFallback(shouldObserve) {
+    if (!_BaseDropdown.AnchorPositionFallbackObserver) {
+      _BaseDropdown.AnchorPositionFallbackObserver = new IntersectionObserver((entries) => {
+        entries.forEach(({ boundingClientRect, isIntersecting, target }) => {
+          if (isListbox(target)) {
+            if (boundingClientRect.bottom > window.innerHeight) {
+              toggleState(target.elementInternals, "flip-block", true);
+              return;
+            }
+            if (boundingClientRect.top < 0) {
+              toggleState(target.elementInternals, "flip-block", false);
+            }
+          }
+        });
+      }, { threshold: 1 });
+    }
+    if (shouldObserve) {
+      this.debounceController = new AbortController();
+      _BaseDropdown.AnchorPositionFallbackObserver.observe(this.listbox);
+      window.addEventListener("scroll", this.repositionListbox, {
+        passive: true,
+        capture: true,
+        signal: this.debounceController.signal
+      });
+      window.addEventListener("resize", this.repositionListbox, {
+        passive: true,
+        signal: this.debounceController.signal
+      });
+      this.repositionListbox();
+      return;
+    }
+    _BaseDropdown.AnchorPositionFallbackObserver.unobserve(this.listbox);
+    this.debounceController?.abort();
+    if (this.frameId) {
+      cancelAnimationFrame(this.frameId);
+      this.frameId = void 0;
+    }
+  }
+};
+__decorate([
+  volatile
+], BaseDropdown.prototype, "activeDescendant", null);
+__decorate([
+  observable
+], BaseDropdown.prototype, "activeIndex", void 0);
+__decorate([
+  attr({ attribute: "aria-labelledby", mode: "fromView" })
+], BaseDropdown.prototype, "ariaLabelledBy", void 0);
+__decorate([
+  observable
+], BaseDropdown.prototype, "control", void 0);
+__decorate([
+  attr({ mode: "boolean" })
+], BaseDropdown.prototype, "disabled", void 0);
+__decorate([
+  volatile
+], BaseDropdown.prototype, "displayValue", null);
+__decorate([
+  attr({ attribute: "id" })
+], BaseDropdown.prototype, "id", void 0);
+__decorate([
+  observable
+], BaseDropdown.prototype, "indicator", void 0);
+__decorate([
+  observable
+], BaseDropdown.prototype, "indicatorSlot", void 0);
+__decorate([
+  attr({ attribute: "value", mode: "fromView" })
+], BaseDropdown.prototype, "initialValue", void 0);
+__decorate([
+  observable
+], BaseDropdown.prototype, "listbox", void 0);
+__decorate([
+  attr({ mode: "boolean" })
+], BaseDropdown.prototype, "multiple", void 0);
+__decorate([
+  attr
+], BaseDropdown.prototype, "name", void 0);
+__decorate([
+  observable
+], BaseDropdown.prototype, "open", void 0);
+__decorate([
+  attr
+], BaseDropdown.prototype, "placeholder", void 0);
+__decorate([
+  attr({ mode: "boolean" })
+], BaseDropdown.prototype, "required", void 0);
+__decorate([
+  attr
+], BaseDropdown.prototype, "type", void 0);
+__decorate([
+  attr({ attribute: "value" })
+], BaseDropdown.prototype, "valueAttribute", void 0);
+
+// node_modules/@fluentui/web-components/dist/esm/dropdown/dropdown.js
+var Dropdown = class extends BaseDropdown {
+  constructor() {
+    super(...arguments);
+    this.appearance = DropdownAppearance.outline;
+  }
+};
+__decorate([
+  attr
+], Dropdown.prototype, "appearance", void 0);
+__decorate([
+  attr
+], Dropdown.prototype, "size", void 0);
+
+// src/Browser.FluentUIWebComponents/web/picker.ts
+var BrowserPicker = class {
+  #element;
+  #listbox;
+  #abort = new AbortController();
+  #onSelection;
+  #onOpen;
+  #onFocus;
+  #requestLayout;
+  #items = [];
+  #options = [];
+  #selectedIndex = -1;
+  #open = false;
+  #disposed = false;
+  #queued = false;
+  #flushing = false;
+  #styles;
+  constructor(element, onSelection, onOpen, onFocus, requestLayout) {
+    if (!(element instanceof Dropdown)) {
+      throw new Error("Picker requires a Fluent dropdown");
+    }
+    this.#element = element;
+    this.#onSelection = onSelection;
+    this.#onOpen = onOpen;
+    this.#onFocus = onFocus;
+    this.#requestLayout = requestLayout;
+    this.#listbox = element.ownerDocument.createElement("fluent-listbox");
+    element.append(this.#listbox);
+    const options = { signal: this.#abort.signal };
+    element.addEventListener("change", (event) => {
+      if (this.#disposed || this.#flushing || element.disabled || event.target !== element) {
+        return;
+      }
+      this.#selectedIndex = this.#options.findIndex((option) => option.selected);
+      this.#onSelection(this.#selectedIndex);
+    }, options);
+    this.#listbox.addEventListener("beforetoggle", (event) => {
+      if (this.#disposed) {
+        return;
+      }
+      const open = event.newState === "open" && !element.disabled;
+      this.#open = open;
+      this.#onOpen(open);
+      if (event.newState === "open" && (this.#disposed || !element.isConnected || element.disabled || !this.#open)) {
+        event.preventDefault();
+      }
+    }, options);
+    element.addEventListener("focusin", () => {
+      if (!this.#disposed) {
+        this.#onFocus(true);
+      }
+    }, options);
+    element.addEventListener("focusout", (event) => {
+      if (!this.#disposed && !element.contains(event.relatedTarget)) {
+        this.#onFocus(false);
+      }
+    }, options);
+  }
+  clear() {
+    this.#items = [];
+  }
+  add(text) {
+    this.#items.push(text);
+  }
+  commit(index) {
+    this.#options = this.#items.map((text, i) => {
+      const option = this.#element.ownerDocument.createElement("fluent-option");
+      option.textContent = text;
+      option.value = String(i);
+      return option;
+    });
+    this.#listbox.replaceChildren(...this.#options);
+    this.select(index);
+    this.#requestLayout();
+  }
+  select(index) {
+    this.#selectedIndex = index;
+    this.#queue();
+  }
+  setEnabled(enabled) {
+    this.#element.disabled = !enabled;
+    this.#queue();
+  }
+  setOpen(open) {
+    this.#open = open;
+    this.#queue();
+  }
+  focus(focused) {
+    this.flush();
+    const control = this.#element.control;
+    if (!control) {
+      return false;
+    }
+    if (focused) {
+      control.focus();
+    } else {
+      control.blur();
+    }
+    return this.#element.contains(this.#element.ownerDocument.activeElement);
+  }
+  #queue() {
+    if (this.#disposed || this.#queued) {
+      return;
+    }
+    this.#queued = true;
+    queueMicrotask(() => {
+      this.#queued = false;
+      this.flush();
+    });
+  }
+  flush() {
+    if (this.#disposed || this.#flushing || !this.#element.isConnected) {
+      return;
+    }
+    this.#flushing = true;
+    try {
+      Updates.process();
+      if (!this.#styles && this.#element.shadowRoot) {
+        this.#styles = this.#element.ownerDocument.createElement("style");
+        this.#styles.textContent = `
+                    :host { color: var(--maui-picker-color, var(--colorNeutralForeground1)); }
+                    :host(:state(placeholder-shown)) { color: var(--maui-picker-placeholder-color, var(--colorNeutralForeground4)); }
+                    .control { font: inherit; letter-spacing: inherit; text-align: inherit;
+                        min-width: 0; height: 100%; align-items: var(--maui-picker-alignment, center); }
+                    ::slotted(button) { text-align: inherit; min-width: 0; }
+                `;
+        this.#element.shadowRoot.append(this.#styles);
+      }
+      this.#element.listbox = this.#listbox;
+      this.#listbox.options = this.#options;
+      Updates.process();
+      this.#options.forEach((option, i) => {
+        option.selected = i === this.#selectedIndex;
+      });
+      this.#listbox.selectedIndex = this.#selectedIndex;
+      const control = this.#element.control;
+      if (control) {
+        const label = this.#element.getAttribute("aria-label");
+        if (label) {
+          control.setAttribute("aria-label", label);
+        } else {
+          control.removeAttribute("aria-label");
+        }
+      }
+      Updates.process();
+      if (this.#open && this.#element.disabled) {
+        this.#open = false;
+        this.#onOpen(false);
+        if (this.#disposed) {
+          return;
+        }
+      }
+      const open = this.#listbox.matches(":popover-open");
+      if (this.#open && !open && !this.#element.disabled) {
+        this.#element.control?.focus();
+        if (!this.#disposed && this.#element.isConnected && this.#open && !this.#element.disabled) {
+          this.#listbox.showPopover();
+        }
+      } else if (!this.#open && open) {
+        this.#listbox.hidePopover();
+      }
+    } finally {
+      this.#flushing = false;
+    }
+  }
+  dispose() {
+    this.#disposed = true;
+    this.#abort.abort();
+    if (this.#listbox.matches(":popover-open")) {
+      this.#listbox.hidePopover();
+    }
+    this.#styles?.remove();
+    this.#listbox.remove();
+    this.#options = [];
+    this.#items = [];
+  }
+};
+
+// node_modules/@fluentui/web-components/dist/esm/checkbox/checkbox.base.js
+var BaseCheckbox = class extends FASTElement {
+  constructor() {
+    super(...arguments);
+    this.initialValue = "on";
+    this._keydownPressed = false;
+    this.dirtyChecked = false;
+    this.elementInternals = this.attachInternals();
+    this._validationFallbackMessage = "";
+    this._value = this.initialValue;
+  }
+  /**
+   * The element's current checked state.
+   *
+   * @public
+   */
+  get checked() {
+    Observable.track(this, "checked");
+    return !!this._checked;
+  }
+  set checked(next2) {
+    this._checked = next2;
+    this.setFormValue(next2 ? this.value : null);
+    this.setValidity();
+    this.setAriaChecked();
+    toggleState(this.elementInternals, "checked", next2);
+    Observable.notify(this, "checked");
+  }
+  /**
+   * Toggles the disabled state when the user changes the `disabled` property.
+   *
+   * @internal
+   */
+  disabledChanged(prev, next2) {
+    if (this.disabled) {
+      this.removeAttribute("tabindex");
+    } else {
+      this.tabIndex = Number(this.getAttribute("tabindex") ?? 0) < 0 ? -1 : 0;
+    }
+    this.elementInternals.ariaDisabled = this.disabled ? "true" : "false";
+    toggleState(this.elementInternals, "disabled", this.disabled);
+  }
+  /**
+   * Sets the disabled state when the `disabled` attribute changes.
+   *
+   * @param prev - the previous value
+   * @param next - the current value
+   * @internal
+   */
+  disabledAttributeChanged(prev, next2) {
+    this.disabled = !!next2;
+  }
+  /**
+   * Updates the checked state when the `checked` attribute is changed, unless the checked state has been changed by the user.
+   *
+   * @param prev - The previous initial checked state
+   * @param next - The current initial checked state
+   * @internal
+   */
+  initialCheckedChanged(prev, next2) {
+    if (!this.dirtyChecked) {
+      this.checked = !!next2;
+    }
+  }
+  /**
+   * Sets the value of the input when the `value` attribute changes.
+   *
+   * @param prev - The previous initial value
+   * @param next - The current initial value
+   * @internal
+   */
+  initialValueChanged(prev, next2) {
+    this._value = next2;
+  }
+  /**
+   * Sets the validity of the control when the required state changes.
+   *
+   * @param prev - The previous required state
+   * @param next - The current required state
+   * @internal
+   */
+  requiredChanged(prev, next2) {
+    if (this.elementInternals) {
+      this.setValidity();
+      this.elementInternals.ariaRequired = this.required ? "true" : "false";
+    }
+  }
+  /**
+   * The associated `<form>` element.
+   *
+   * @public
+   * @remarks
+   * Reflects the {@link https://developer.mozilla.org/docs/Web/API/ElementInternals/form | `ElementInternals.form`} property.
+   */
+  get form() {
+    return this.elementInternals.form;
+  }
+  static {
+    this.formAssociated = true;
+  }
+  /**
+   * A reference to all associated `<label>` elements.
+   *
+   * @public
+   */
+  get labels() {
+    return Object.freeze(Array.from(this.elementInternals.labels));
+  }
+  /**
+   * The validation message. Uses the browser's default validation message for native checkboxes if not otherwise
+   * specified (e.g., via `setCustomValidity`).
+   *
+   * @public
+   * @remarks
+   * Reflects the {@link https://developer.mozilla.org/docs/Web/API/ElementInternals/validationMessage | `ElementInternals.validationMessage`} property.
+   */
+  get validationMessage() {
+    if (this.elementInternals?.validationMessage) {
+      return this.elementInternals.validationMessage;
+    }
+    if (!this._validationFallbackMessage) {
+      const validationMessageFallbackControl = document.createElement("input");
+      validationMessageFallbackControl.type = "checkbox";
+      validationMessageFallbackControl.required = true;
+      validationMessageFallbackControl.checked = false;
+      this._validationFallbackMessage = validationMessageFallbackControl.validationMessage;
+    }
+    return this._validationFallbackMessage;
+  }
+  /**
+   * The element's validity state.
+   *
+   * @public
+   * @remarks
+   * Reflects the {@link https://developer.mozilla.org/docs/Web/API/ElementInternals/validity | `ElementInternals.validity`} property.
+   */
+  get validity() {
+    return this.elementInternals.validity;
+  }
+  /**
+   * The current value of the input.
+   *
+   * @public
+   */
+  get value() {
+    Observable.track(this, "value");
+    return this._value;
+  }
+  set value(value) {
+    this._value = value;
+    if (this.elementInternals) {
+      this.setFormValue(value);
+      this.setValidity();
+    }
+    Observable.notify(this, "value");
+  }
+  /**
+   * Determines if the control can be submitted for constraint validation.
+   *
+   * @public
+   * @remarks
+   * Reflects the {@link https://developer.mozilla.org/docs/Web/API/ElementInternals/willValidate | `ElementInternals.willValidate`} property.
+   */
+  get willValidate() {
+    return this.elementInternals.willValidate;
+  }
+  /**
+   * Checks the validity of the element and returns the result.
+   *
+   * @public
+   * @remarks
+   * Reflects the {@link https://developer.mozilla.org/docs/Web/API/ElementInternals/checkValidity | `HTMLInputElement.checkValidity()`} method.
+   */
+  checkValidity() {
+    return this.elementInternals.checkValidity();
+  }
+  /**
+   * Toggles the checked state when the user clicks the element.
+   *
+   * @param e - the event object
+   * @internal
+   */
+  clickHandler(e) {
+    if (this.disabled) {
+      return;
+    }
+    this.dirtyChecked = true;
+    const previousChecked = this.checked;
+    this.toggleChecked();
+    if (previousChecked !== this.checked) {
+      this.$emit("change");
+      this.$emit("input");
+    }
+    return true;
+  }
+  connectedCallback() {
+    super.connectedCallback();
+    this.disabled = !!this.disabledAttribute;
+    this.setAriaChecked();
+    this.setValidity();
+    maybeSetAutoFocus(this);
+  }
+  /**
+   * Updates the form value when a user changes the `checked` state.
+   *
+   * @param e - the event object
+   * @internal
+   */
+  inputHandler(e) {
+    this.setFormValue(this.value);
+    this.setValidity();
+    return true;
+  }
+  /**
+   * Prevents scrolling when the user presses the space key, and sets a flag to indicate that the space key was pressed
+   * down while the checkbox was focused.
+   *
+   * @param e - the event object
+   * @internal
+   */
+  keydownHandler(e) {
+    if (e.key !== " ") {
+      return true;
+    }
+    this._keydownPressed = true;
+  }
+  /**
+   * Toggles the checked state when the user releases the space key.
+   *
+   * @param e - the event object
+   * @internal
+   */
+  keyupHandler(e) {
+    if (!this._keydownPressed || e.key !== " ") {
+      return true;
+    }
+    this._keydownPressed = false;
+    this.click();
+  }
+  /**
+   * Resets the form value to its initial value when the form is reset.
+   *
+   * @internal
+   */
+  formResetCallback() {
+    this.checked = this.initialChecked ?? false;
+    this.dirtyChecked = false;
+    this.setValidity();
+  }
+  /**
+   * Reports the validity of the element.
+   *
+   * @public
+   * @remarks
+   * Reflects the {@link https://developer.mozilla.org/docs/Web/API/ElementInternals/reportValidity | `HTMLInputElement.reportValidity()`} method.
+   */
+  reportValidity() {
+    return this.elementInternals.reportValidity();
+  }
+  /**
+   * Sets the ARIA checked state.
+   *
+   * @param value - The checked state
+   * @internal
+   */
+  setAriaChecked(value = this.checked) {
+    if (this.elementInternals) {
+      this.elementInternals.ariaChecked = value ? "true" : "false";
+    }
+  }
+  /**
+   * Reflects the {@link https://developer.mozilla.org/docs/Web/API/ElementInternals/setFormValue | `ElementInternals.setFormValue()`} method.
+   *
+   * @internal
+   */
+  setFormValue(value, state) {
+    this.elementInternals?.setFormValue(value, value ?? state);
+  }
+  /**
+   * Sets a custom validity message.
+   *
+   * @param message - The message to set
+   * @public
+   */
+  setCustomValidity(message) {
+    this.elementInternals.setValidity({ customError: true }, message);
+    this.setValidity();
+  }
+  /**
+   * Sets the validity of the control.
+   *
+   * @param flags - Validity flags to set.
+   * @param message - Optional message to supply. If not provided, the control's `validationMessage` will be used.
+   * @param anchor - Optional anchor to use for the validation message.
+   *
+   * @internal
+   */
+  setValidity(flags, message, anchor2) {
+    if (this.elementInternals) {
+      if (this.disabled || !this.required) {
+        this.elementInternals.setValidity({});
+        return;
+      }
+      this.elementInternals.setValidity({ valueMissing: !!this.required && !this.checked, ...flags }, message ?? this.validationMessage, anchor2);
+    }
+  }
+  /**
+   * Toggles the checked state of the control.
+   *
+   * @param force - Forces the element to be checked or unchecked
+   * @public
+   */
+  toggleChecked(force = !this.checked) {
+    this.checked = force;
+  }
+};
+__decorate([
+  observable
+], BaseCheckbox.prototype, "disabled", void 0);
+__decorate([
+  attr({ attribute: "disabled", mode: "boolean" })
+], BaseCheckbox.prototype, "disabledAttribute", void 0);
+__decorate([
+  attr({ attribute: "form" })
+], BaseCheckbox.prototype, "formAttribute", void 0);
+__decorate([
+  attr({ attribute: "checked", mode: "boolean" })
+], BaseCheckbox.prototype, "initialChecked", void 0);
+__decorate([
+  attr({ attribute: "value", mode: "fromView" })
+], BaseCheckbox.prototype, "initialValue", void 0);
+__decorate([
+  attr
+], BaseCheckbox.prototype, "name", void 0);
+__decorate([
+  attr({ mode: "boolean" })
+], BaseCheckbox.prototype, "required", void 0);
+
+// node_modules/@fluentui/web-components/dist/esm/switch/switch.js
+var Switch = class extends BaseCheckbox {
+  constructor() {
+    super();
+    this.elementInternals.role = "switch";
+  }
+};
+
+// src/Browser.FluentUIWebComponents/web/switch.ts
+var BrowserSwitch = class {
+  #element;
+  #abort = new AbortController();
+  #disposed = false;
+  constructor(element, onChange, onFocus) {
+    if (!(element instanceof Switch)) {
+      throw new Error("Switch requires a Fluent switch");
+    }
+    this.#element = element;
+    const options = { signal: this.#abort.signal };
+    element.addEventListener("change", (event) => {
+      if (!this.#disposed && !element.disabled && event.target === element) {
+        onChange(element.checked);
+      }
+    }, options);
+    element.addEventListener("focus", () => {
+      if (!this.#disposed) {
+        onFocus(true);
+      }
+    }, options);
+    element.addEventListener("blur", () => {
+      if (!this.#disposed) {
+        onFocus(false);
+      }
+    }, options);
+  }
+  focus(focused) {
+    if (this.#disposed) {
+      return false;
+    }
+    if (focused) {
+      this.#element.focus();
+    } else {
+      this.#element.blur();
+    }
+    return !this.#disposed && this.#element.ownerDocument.activeElement === this.#element;
+  }
+  dispose() {
+    this.#disposed = true;
+    this.#abort.abort();
+  }
+};
+function createSwitchStyles() {
+  const style = document.createElement("style");
+  style.textContent = `
+        @media (forced-colors: none) {
+            fluent-switch[data-maui-switch-track]:not(:state(disabled)) {
+                background-color: var(--maui-switch-track);
+                border-color: var(--maui-switch-track);
+            }
+            fluent-switch[data-maui-switch-thumb]:not(:state(disabled))::part(checked-indicator) {
+                background-color: var(--maui-switch-thumb);
+            }
+        }
+    `;
+  return style;
+}
+
 // src/Browser.FluentUIWebComponents/web/bridge.ts
 var DomBrowserBridge = class {
   // The existing JS-only unsubscribe operation is not part of the C# import contract.
@@ -6336,6 +7917,9 @@ var DomBrowserBridge = class {
   #scrolls = /* @__PURE__ */ new Map();
   #timers = /* @__PURE__ */ new Map();
   #inputs = /* @__PURE__ */ new Map();
+  #pickers = /* @__PURE__ */ new Map();
+  #switches = /* @__PURE__ */ new Map();
+  #switchStyles;
   #inputStyles;
   #sequence = 0;
   #observer;
@@ -6376,6 +7960,16 @@ var DomBrowserBridge = class {
       });
     });
     this.imports = {
+      subscribePicker: this.#subscribePicker.bind(this),
+      pickerClear: (id3) => this.#picker(id3).clear(),
+      pickerAdd: (id3, text) => this.#picker(id3).add(text),
+      pickerCommit: (id3, index) => this.#picker(id3).commit(index),
+      pickerSelection: (id3, index) => this.#picker(id3).select(index),
+      pickerEnabled: (id3, enabled) => this.#picker(id3).setEnabled(enabled),
+      pickerOpen: (id3, open) => this.#picker(id3).setOpen(open),
+      pickerFocus: (id3, focused) => this.#picker(id3).focus(focused),
+      subscribeSwitch: this.#subscribeSwitch.bind(this),
+      switchFocus: (id3, focused) => this.#switch(id3).focus(focused),
       imageSource: (id3, name, request) => this.#images.setSource(id3, this.#get(id3), name, request),
       imageAspect: (id3, aspect) => this.#images.setAspect(id3, aspect),
       fontFamily: (filename) => this.#fonts.getFamily(filename),
@@ -6429,6 +8023,48 @@ var DomBrowserBridge = class {
       throw new Error(`Stale MAUI element handle: ${id3}`);
     }
     return element;
+  }
+  #picker(id3) {
+    this.#get(id3);
+    const picker = this.#pickers.get(id3);
+    if (!picker) {
+      throw new Error(`Picker is not subscribed: ${id3}`);
+    }
+    return picker;
+  }
+  #subscribePicker(id3) {
+    if (this.#stopped || this.#pickers.has(id3)) {
+      throw new Error("Picker subscription is stopped or duplicated");
+    }
+    this.#pickers.set(id3, new BrowserPicker(
+      this.#get(id3),
+      (index) => this.#invoke(() => this.#getApi().OnPickerSelection(id3, index)),
+      (open) => this.#invoke(() => this.#getApi().OnPickerOpen(id3, open)),
+      (focused) => this.#invoke(() => this.#getApi().OnPickerFocus(id3, focused)),
+      this.#requestLayout
+    ));
+  }
+  #switch(id3) {
+    this.#get(id3);
+    const control = this.#switches.get(id3);
+    if (!control) {
+      throw new Error(`Switch is not subscribed: ${id3}`);
+    }
+    return control;
+  }
+  #subscribeSwitch(id3) {
+    if (this.#stopped || this.#switches.has(id3)) {
+      throw new Error("Switch subscription is stopped or duplicated");
+    }
+    this.#switches.set(id3, new BrowserSwitch(
+      this.#get(id3),
+      (isOn) => this.#invoke(() => this.#getApi().OnSwitchChanged(id3, isOn)),
+      (focused) => this.#invoke(() => this.#getApi().OnSwitchFocus(id3, focused))
+    ));
+    if (!this.#switchStyles) {
+      this.#switchStyles = createSwitchStyles();
+      this.#viewport.append(this.#switchStyles);
+    }
   }
   #input(id3) {
     this.#get(id3);
@@ -6573,6 +8209,14 @@ var DomBrowserBridge = class {
     for (const input of this.#inputs.values()) {
       input.dispose();
     }
+    for (const picker of this.#pickers.values()) {
+      picker.dispose();
+    }
+    for (const control of this.#switches.values()) {
+      control.dispose();
+    }
+    this.#switchStyles?.remove();
+    this.#switchStyles = void 0;
     this.#inputStyles?.remove();
     this.#inputStyles = void 0;
     this.#theme.dispose();
@@ -6594,22 +8238,22 @@ var DomBrowserBridge = class {
     console.warn(message);
     this.#viewport.dispatchEvent(new CustomEvent("maui-resource-error", { detail: message }));
   };
-  #create(tagName5) {
+  #create(tagName9) {
     if (this.#stopped) {
       throw new Error("MAUI bridge is stopped");
     }
-    if (tagName5 !== tagName5.toLowerCase()) {
-      throw new Error(`Expected a lowercase HTML tag name: ${tagName5}`);
+    if (tagName9 !== tagName9.toLowerCase()) {
+      throw new Error(`Expected a lowercase HTML tag name: ${tagName9}`);
     }
-    if (tagName5.includes("-") && !customElements.get(tagName5)) {
-      throw new Error(`Custom element is not registered: ${tagName5}`);
+    if (tagName9.includes("-") && !customElements.get(tagName9)) {
+      throw new Error(`Custom element is not registered: ${tagName9}`);
     }
     if (this.#sequence >= 2147483647) {
       throw new Error("MAUI element handle limit reached");
     }
-    const element = document.createElement(tagName5);
+    const element = document.createElement(tagName9);
     if (element instanceof HTMLUnknownElement) {
-      throw new Error(`Unknown HTML element: ${tagName5}`);
+      throw new Error(`Unknown HTML element: ${tagName9}`);
     }
     const id3 = ++this.#sequence;
     element.style.position = "absolute";
@@ -6650,12 +8294,14 @@ var DomBrowserBridge = class {
   }
   #measure(id3, width, height, returnHeight) {
     this.#inputs.get(id3)?.flush();
+    this.#pickers.get(id3)?.flush();
     const element = this.#get(id3);
     const saved = element.style.cssText;
     try {
+      const fixedSize = this.#switches.has(id3);
       Object.assign(element.style, {
-        width: "max-content",
-        height: "auto",
+        width: fixedSize ? "" : "max-content",
+        height: fixedSize ? "" : "auto",
         maxWidth: Number.isFinite(width) ? `${Math.max(0, width)}px` : "none",
         maxHeight: "none"
       });
@@ -6679,6 +8325,10 @@ var DomBrowserBridge = class {
     this.#images.release(id3);
     this.#inputs.get(id3)?.dispose();
     this.#inputs.delete(id3);
+    this.#pickers.get(id3)?.dispose();
+    this.#pickers.delete(id3);
+    this.#switches.get(id3)?.dispose();
+    this.#switches.delete(id3);
     this.#unmount(id3);
     this.#unsubscribeClick(id3);
     const onScroll = this.#scrolls.get(id3);
@@ -6795,7 +8445,7 @@ var ButtonType = {
   reset: "reset",
   button: "button"
 };
-var tagName2 = `${FluentDesignSystem.prefix}-button`;
+var tagName5 = `${FluentDesignSystem.prefix}-button`;
 
 // node_modules/@fluentui/web-components/dist/esm/utils/display.js
 var hidden = `:host([hidden]){display:none}`;
@@ -6813,10 +8463,14 @@ var colorNeutralForeground2Pressed = "var(--colorNeutralForeground2Pressed)";
 var colorNeutralForeground2BrandHover = "var(--colorNeutralForeground2BrandHover)";
 var colorNeutralForeground2BrandPressed = "var(--colorNeutralForeground2BrandPressed)";
 var colorNeutralForeground3 = "var(--colorNeutralForeground3)";
+var colorNeutralForeground3Hover = "var(--colorNeutralForeground3Hover)";
+var colorNeutralForeground3Pressed = "var(--colorNeutralForeground3Pressed)";
 var colorNeutralForeground4 = "var(--colorNeutralForeground4)";
 var colorNeutralForegroundDisabled = "var(--colorNeutralForegroundDisabled)";
 var colorNeutralForegroundOnBrand = "var(--colorNeutralForegroundOnBrand)";
 var colorNeutralForegroundInverted = "var(--colorNeutralForegroundInverted)";
+var colorNeutralForegroundInvertedHover = "var(--colorNeutralForegroundInvertedHover)";
+var colorNeutralForegroundInvertedPressed = "var(--colorNeutralForegroundInvertedPressed)";
 var colorNeutralBackground1 = "var(--colorNeutralBackground1)";
 var colorNeutralBackground1Hover = "var(--colorNeutralBackground1Hover)";
 var colorNeutralBackground1Pressed = "var(--colorNeutralBackground1Pressed)";
@@ -6832,6 +8486,9 @@ var colorNeutralBackgroundDisabled = "var(--colorNeutralBackgroundDisabled)";
 var colorBrandBackground = "var(--colorBrandBackground)";
 var colorBrandBackgroundHover = "var(--colorBrandBackgroundHover)";
 var colorBrandBackgroundPressed = "var(--colorBrandBackgroundPressed)";
+var colorCompoundBrandBackground = "var(--colorCompoundBrandBackground)";
+var colorCompoundBrandBackgroundHover = "var(--colorCompoundBrandBackgroundHover)";
+var colorCompoundBrandBackgroundPressed = "var(--colorCompoundBrandBackgroundPressed)";
 var colorNeutralStrokeAccessible = "var(--colorNeutralStrokeAccessible)";
 var colorNeutralStrokeAccessibleHover = "var(--colorNeutralStrokeAccessibleHover)";
 var colorNeutralStrokeAccessiblePressed = "var(--colorNeutralStrokeAccessiblePressed)";
@@ -6844,6 +8501,7 @@ var colorCompoundBrandStrokePressed = "var(--colorCompoundBrandStrokePressed)";
 var colorNeutralStrokeDisabled = "var(--colorNeutralStrokeDisabled)";
 var colorTransparentStroke = "var(--colorTransparentStroke)";
 var colorTransparentStrokeInteractive = "var(--colorTransparentStrokeInteractive)";
+var colorStrokeFocus1 = "var(--colorStrokeFocus1)";
 var colorStrokeFocus2 = "var(--colorStrokeFocus2)";
 var colorPaletteRedBorder2 = "var(--colorPaletteRedBorder2)";
 var borderRadiusNone = "var(--borderRadiusNone)";
@@ -6880,6 +8538,7 @@ var lineHeightHero900 = "var(--lineHeightHero900)";
 var lineHeightHero1000 = "var(--lineHeightHero1000)";
 var shadow2 = "var(--shadow2)";
 var shadow4 = "var(--shadow4)";
+var shadow16 = "var(--shadow16)";
 var strokeWidthThin = "var(--strokeWidthThin)";
 var strokeWidthThick = "var(--strokeWidthThick)";
 var spacingHorizontalXXS = "var(--spacingHorizontalXXS)";
@@ -6890,6 +8549,8 @@ var spacingHorizontalMNudge = "var(--spacingHorizontalMNudge)";
 var spacingHorizontalM = "var(--spacingHorizontalM)";
 var spacingHorizontalL = "var(--spacingHorizontalL)";
 var spacingVerticalXS = "var(--spacingVerticalXS)";
+var spacingVerticalSNudge = "var(--spacingVerticalSNudge)";
+var spacingVerticalS = "var(--spacingVerticalS)";
 var durationUltraFast = "var(--durationUltraFast)";
 var durationFaster = "var(--durationFaster)";
 var durationNormal = "var(--durationNormal)";
@@ -7191,14 +8852,14 @@ function buttonTemplate(options = {}) {
     </template>
   `;
 }
-var template = buttonTemplate();
+var template2 = buttonTemplate();
 
 // node_modules/@fluentui/web-components/dist/esm/button/button.definition.js
 var definition = {
-  name: tagName2,
+  name: tagName5,
   registry: FluentDesignSystem.registry,
   styles: styles2,
-  template
+  template: template2
 };
 
 // node_modules/@fluentui/web-components/dist/esm/button/button.base.js
@@ -7478,7 +9139,7 @@ applyMixins(Button, StartEnd);
 Button.define(definition);
 
 // node_modules/@fluentui/web-components/dist/esm/text/text.options.js
-var tagName3 = `${FluentDesignSystem.prefix}-text`;
+var tagName6 = `${FluentDesignSystem.prefix}-text`;
 
 // node_modules/@fluentui/web-components/dist/esm/text/text.styles.js
 var styles3 = css`
@@ -7588,14 +9249,14 @@ var styles3 = css`
 `;
 
 // node_modules/@fluentui/web-components/dist/esm/text/text.template.js
-var template2 = html`<slot></slot>`;
+var template3 = html`<slot></slot>`;
 
 // node_modules/@fluentui/web-components/dist/esm/text/text.definition.js
 var definition2 = {
-  name: tagName3,
+  name: tagName6,
   registry: FluentDesignSystem.registry,
   styles: styles3,
-  template: template2
+  template: template3
 };
 
 // node_modules/@fluentui/web-components/dist/esm/text/text.js
@@ -7644,17 +9305,6 @@ __decorate([
 
 // node_modules/@fluentui/web-components/dist/esm/text/define.js
 Text.define(definition2);
-
-// node_modules/@fluentui/web-components/dist/esm/utils/support.js
-var AnchorPositioningCSSSupported = CSS.supports("anchor-name: --a");
-var AnchorPositioningHTMLSupported = "anchor" in HTMLElement.prototype;
-var CustomStatesSetSupported = CSS.supports("selector(:state(g))");
-
-// node_modules/@fluentui/web-components/dist/esm/utils/element-internals.js
-var statesMap = /* @__PURE__ */ new Map();
-function stateSelector(state) {
-  return statesMap.get(state) ?? statesMap.set(state, CustomStatesSetSupported ? `:state(${state})` : `[state--${state}]`).get(state);
-}
 
 // node_modules/@fluentui/web-components/dist/esm/styles/states/index.js
 var activeState = stateSelector("active");
@@ -7927,7 +9577,7 @@ function textInputTemplate(options = {}) {
     </template>
   `;
 }
-var template3 = textInputTemplate();
+var template4 = textInputTemplate();
 
 // node_modules/@fluentui/web-components/dist/esm/text-input/text-input.definition.js
 var definition3 = {
@@ -7937,14 +9587,14 @@ var definition3 = {
     delegatesFocus: true
   },
   styles: styles4,
-  template: template3
+  template: template4
 };
 
 // node_modules/@fluentui/web-components/dist/esm/text-input/define.js
 TextInput.define(definition3);
 
 // node_modules/@fluentui/web-components/dist/esm/image/image.options.js
-var tagName4 = `${FluentDesignSystem.prefix}-image`;
+var tagName7 = `${FluentDesignSystem.prefix}-image`;
 
 // node_modules/@fluentui/web-components/dist/esm/image/image.styles.js
 var styles5 = css`
@@ -8001,14 +9651,14 @@ var styles5 = css`
 `;
 
 // node_modules/@fluentui/web-components/dist/esm/image/image.template.js
-var template4 = html`<slot></slot>`;
+var template5 = html`<slot></slot>`;
 
 // node_modules/@fluentui/web-components/dist/esm/image/image.definition.js
 var definition4 = {
-  name: tagName4,
+  name: tagName7,
   registry: FluentDesignSystem.registry,
   styles: styles5,
-  template: template4
+  template: template5
 };
 
 // node_modules/@fluentui/web-components/dist/esm/image/image.js
@@ -8033,12 +9683,1144 @@ __decorate([
 // node_modules/@fluentui/web-components/dist/esm/image/define.js
 Image.define(definition4);
 
+// node_modules/@fluentui/web-components/dist/esm/styles/partials/typography.partials.js
+var typographyBody1Styles = css.partial`
+  font-family: ${fontFamilyBase};
+  font-size: ${fontSizeBase300};
+  line-height: ${lineHeightBase300};
+  font-weight: ${fontWeightRegular};
+`;
+var typographyBody1StrongStyles = css.partial`
+  font-family: ${fontFamilyBase};
+  font-size: ${fontSizeBase300};
+  line-height: ${lineHeightBase300};
+  font-weight: ${fontWeightSemibold};
+`;
+var typographyBody1StrongerStyles = css.partial`
+  font-family: ${fontFamilyBase};
+  font-size: ${fontSizeBase300};
+  line-height: ${lineHeightBase300};
+  font-weight: ${fontWeightBold};
+`;
+var typographyBody2Styles = css.partial`
+  font-family: ${fontFamilyBase};
+  font-size: ${fontSizeBase400};
+  line-height: ${lineHeightBase400};
+  font-weight: ${fontWeightRegular};
+`;
+var typographyCaption1Styles = css.partial`
+  font-family: ${fontFamilyBase};
+  font-size: ${fontSizeBase200};
+  line-height: ${lineHeightBase200};
+  font-weight: ${fontWeightRegular};
+`;
+var typographyCaption1StrongStyles = css.partial`
+  font-family: ${fontFamilyBase};
+  font-size: ${fontSizeBase200};
+  line-height: ${lineHeightBase200};
+  font-weight: ${fontWeightSemibold};
+`;
+var typographyCaption1StrongerStyles = css.partial`
+  font-family: ${fontFamilyBase};
+  font-size: ${fontSizeBase200};
+  line-height: ${lineHeightBase200};
+  font-weight: ${fontWeightBold};
+`;
+var typographyCaption2Styles = css.partial`
+  font-family: ${fontFamilyBase};
+  font-size: ${fontSizeBase100};
+  line-height: ${lineHeightBase100};
+  font-weight: ${fontWeightRegular};
+`;
+var typographyCaption2StrongStyles = css.partial`
+  font-family: ${fontFamilyBase};
+  font-size: ${fontSizeBase100};
+  line-height: ${lineHeightBase100};
+  font-weight: ${fontWeightSemibold};
+`;
+var typographySubtitle1Styles = css.partial`
+  font-family: ${fontFamilyBase};
+  font-size: ${fontSizeBase500};
+  line-height: ${lineHeightBase500};
+  font-weight: ${fontWeightSemibold};
+`;
+var typographySubtitle2Styles = css.partial`
+  font-family: ${fontFamilyBase};
+  font-size: ${fontSizeBase400};
+  line-height: ${lineHeightBase400};
+  font-weight: ${fontWeightSemibold};
+`;
+var typographySubtitle2StrongerStyles = css.partial`
+  font-family: ${fontFamilyBase};
+  font-size: ${fontSizeBase400};
+  line-height: ${lineHeightBase400};
+  font-weight: ${fontWeightBold};
+`;
+var typographyTitle1Styles = css.partial`
+  font-family: ${fontFamilyBase};
+  font-size: ${fontSizeHero800};
+  line-height: ${lineHeightHero800};
+  font-weight: ${fontWeightSemibold};
+`;
+var typographyTitle2Styles = css.partial`
+  font-family: ${fontFamilyBase};
+  font-size: ${fontSizeHero700};
+  line-height: ${lineHeightHero700};
+  font-weight: ${fontWeightSemibold};
+`;
+var typographyTitle3Styles = css.partial`
+  font-family: ${fontFamilyBase};
+  font-size: ${fontSizeBase600};
+  line-height: ${lineHeightBase600};
+  font-weight: ${fontWeightSemibold};
+`;
+var typographyLargeTitleStyles = css.partial`
+  font-family: ${fontFamilyBase};
+  font-size: ${fontSizeHero900};
+  line-height: ${lineHeightHero900};
+  font-weight: ${fontWeightSemibold};
+`;
+var typographyDisplayStyles = css.partial`
+  font-family: ${fontFamilyBase};
+  font-size: ${fontSizeHero1000};
+  line-height: ${lineHeightHero1000};
+  font-weight: ${fontWeightSemibold};
+`;
+
+// node_modules/@fluentui/web-components/dist/esm/dropdown/dropdown.styles.js
+var styles6 = css`
+  ${display("inline-flex")}
+
+  :host {
+    box-sizing: border-box;
+    color: ${colorNeutralForeground1};
+    cursor: pointer;
+  }
+
+  :host(${placeholderShownState}) {
+    color: ${colorNeutralForeground4};
+  }
+
+  .control {
+    appearance: none;
+    background-color: ${colorNeutralBackground1};
+    border-radius: ${borderRadiusMedium};
+    border: ${strokeWidthThin} solid ${colorTransparentStroke};
+    box-shadow: inset 0 0 0 ${strokeWidthThin} var(--control-border-color);
+    box-sizing: border-box;
+    color: inherit;
+    column-gap: ${spacingHorizontalXXS};
+    display: inline-flex;
+    justify-content: space-between;
+    min-width: 160px;
+    overflow: hidden;
+    padding: ${spacingVerticalSNudge} ${spacingHorizontalMNudge};
+    white-space: normal;
+    position: relative;
+    text-align: start;
+    width: 100%;
+    z-index: 1;
+    ${typographyBody1Styles}
+  }
+
+  :host([size='small']) .control {
+    column-gap: ${spacingHorizontalXXS};
+    padding: ${spacingVerticalXS} ${spacingHorizontalSNudge};
+    ${typographyCaption1Styles}
+  }
+
+  :host([size='large']) .control {
+    column-gap: ${spacingHorizontalS};
+    padding: ${spacingVerticalS} ${spacingHorizontalM};
+    ${typographyBody2Styles}
+  }
+
+  ::slotted(:is(input, button)) {
+    all: unset;
+    flex: 1 1 auto;
+  }
+
+  ::slotted(button) {
+    cursor: pointer;
+  }
+
+  ::slotted(input) {
+    cursor: text;
+  }
+
+  :where(slot[name='indicator'] > *, ::slotted([slot='indicator'])) {
+    all: unset;
+    align-items: center;
+    appearance: none;
+    aspect-ratio: 1;
+    color: ${colorNeutralForeground3};
+    display: inline-flex;
+    justify-content: center;
+    width: 20px;
+  }
+
+  :host([size='small']) :where(slot[name='indicator'] > *, ::slotted([slot='indicator'])) {
+    width: 16px;
+  }
+
+  :host([size='large']) :where(slot[name='indicator'] > *, ::slotted([slot='indicator'])) {
+    width: 24px;
+  }
+
+  .control::after,
+  .control::before {
+    content: '' / '';
+    inset: auto 0 0;
+    pointer-events: none;
+    position: absolute;
+  }
+
+  .control::before {
+    height: ${strokeWidthThin};
+  }
+
+  .control::after {
+    background-color: ${colorCompoundBrandStroke};
+    height: ${strokeWidthThick};
+    scale: 0 1;
+    transition: scale ${durationUltraFast} ${curveDecelerateMid};
+  }
+
+  /**
+  * focus-ring style uses lingering :focus-within selector due to platform limitations
+  * TODO: Convert selector to \`:host(:has(:focus-visible)) .control\` when browser support increases
+  * ISSUE: https://issues.chromium.org/issues/40062355
+  */
+  :host(:where(:focus-within)) .control {
+    border-radius: ${borderRadiusMedium};
+    box-shadow: inset 0 0 0 1px ${colorStrokeFocus1};
+    outline: ${strokeWidthThick} solid ${colorStrokeFocus2};
+  }
+
+  :host(:where(${openState}, :focus-within)) .control::after {
+    scale: 1 1;
+    transition-duration: ${durationNormal};
+    transition-timing-function: ${curveAccelerateMid};
+  }
+
+  :host(:where([appearance='outline'], [appearance='transparent'])) .control::before {
+    background-color: ${colorNeutralStrokeAccessible};
+  }
+
+  :host([appearance='transparent']) .control {
+    --control-border-color: ${colorTransparentStrokeInteractive};
+    background-color: ${colorTransparentBackground};
+    border-radius: ${borderRadiusNone};
+  }
+
+  :host([appearance='outline']) .control {
+    --control-border-color: ${colorNeutralStroke1};
+  }
+
+  :host([appearance='outline']) .control:hover {
+    --control-border-color: ${colorNeutralStroke1Hover};
+  }
+
+  :host(:where([appearance='outline'], [appearance='transparent'])) .control:hover::before {
+    background-color: ${colorNeutralStrokeAccessibleHover};
+  }
+
+  :host([appearance='outline']) .control:hover::after {
+    background-color: ${colorCompoundBrandBackgroundHover};
+  }
+
+  :host([appearance='outline']) .control:active {
+    --control-border-color: ${colorNeutralStroke1Pressed};
+  }
+
+  :host(:where([appearance='outline'], [appearance='transparent'])) .control:active::before {
+    background-color: ${colorNeutralStrokeAccessiblePressed};
+  }
+
+  :host(:where([appearance='outline'], [appearance='transparent'])) .control:active::after {
+    background-color: ${colorCompoundBrandBackgroundPressed};
+  }
+
+  :host([appearance='filled-darker']) .control {
+    background-color: ${colorNeutralBackground3};
+  }
+
+  :host(:where([appearance='filled-lighter'], [appearance='filled-darker'])) .control {
+    --control-border-color: ${colorTransparentStroke};
+  }
+
+  :host(${nativeDisabledState}),
+  :host(${nativeDisabledState}) ::slotted(:where(button, input)) {
+    cursor: not-allowed;
+  }
+
+  :host(${nativeDisabledState}) .control::before,
+  :host(${nativeDisabledState}) .control::after {
+    content: none;
+  }
+
+  :host(${nativeDisabledState}) .control:is(*, :active, :hover),
+  :host(${nativeDisabledState}) :where(slot[name='indicator'] > *, ::slotted([slot='indicator'])) {
+    --control-border-color: ${colorNeutralStrokeDisabled};
+    background-color: ${colorNeutralBackgroundDisabled};
+    color: ${colorNeutralForegroundDisabled};
+  }
+
+  ::slotted(:not([slot]):not([popover])),
+  ::slotted([popover]:not(:popover-open)) {
+    display: none;
+  }
+
+  @supports not (anchor-name: --anchor) {
+    :host {
+      --listbox-max-height: 50vh;
+      --margin-offset: calc(${lineHeightBase300} + (${spacingVerticalSNudge} * 2) + ${strokeWidthThin});
+    }
+
+    :host([size='small']) {
+      --margin-offset: calc(${lineHeightBase200} + (${spacingVerticalXS} * 2) + ${strokeWidthThin});
+    }
+
+    :host([size='large']) {
+      --margin-offset: calc(${lineHeightBase400} + (${spacingVerticalS} * 2) + ${strokeWidthThin});
+    }
+  }
+
+  @media (forced-colors: active) {
+    :host(${nativeDisabledState}) .control {
+      border-color: GrayText;
+    }
+    :host(${nativeDisabledState}) :where(slot[name='indicator'] > *, ::slotted([slot='indicator'])) {
+      color: GrayText;
+    }
+  }
+`;
+
+// node_modules/@fluentui/web-components/dist/esm/dropdown/dropdown.definition.js
+var definition5 = {
+  name: tagName4,
+  registry: FluentDesignSystem.registry,
+  styles: styles6,
+  template
+};
+
+// node_modules/@fluentui/web-components/dist/esm/dropdown/define.js
+Dropdown.define(definition5);
+
+// node_modules/@fluentui/web-components/dist/esm/listbox/listbox.styles.js
+var styles7 = css`
+  ${display("inline-flex")}
+
+  :host {
+    background-color: ${colorNeutralBackground1};
+    border-radius: ${borderRadiusMedium};
+    border: ${strokeWidthThin} solid ${colorTransparentStroke};
+    box-shadow: ${shadow16};
+    box-sizing: border-box;
+    flex-direction: column;
+    margin: 0;
+    min-inline-size: 160px;
+    padding: ${spacingHorizontalXS};
+    row-gap: ${spacingHorizontalXXS};
+    width: auto;
+  }
+
+  :host([popover]) {
+    inset: unset;
+    overflow: auto;
+  }
+
+  @supports (anchor-name: --anchor) {
+    :host([popover]) {
+      position: fixed;
+      max-block-size: var(--listbox-max-height, calc(50vh - anchor-size(self-block)));
+      min-inline-size: anchor-size(inline);
+      inset-block-start: anchor(outside);
+      inset-inline-start: anchor(inside);
+      position-try-fallbacks: flip-block, flip-inline, flip-inline flip-block;
+    }
+  }
+
+  @supports not (anchor-name: --anchor) {
+    :host([popover]) {
+      margin-block-start: var(--margin-offset, 0);
+      max-block-size: var(--listbox-max-height, 50vh);
+      position: absolute;
+    }
+
+    :host([popover]${flipBlockState}) {
+      margin-block-start: revert;
+      translate: 0 -100%;
+    }
+  }
+`;
+
+// node_modules/@fluentui/web-components/dist/esm/listbox/listbox.template.js
+function listboxTemplate() {
+  return html`
+    <template
+      @beforetoggle="${(x, c) => x.beforetoggleHandler(c.event)}"
+      @click="${(x, c) => x.clickHandler(c.event)}"
+    >
+      <slot ${ref("defaultSlot")} @slotchange="${(x, c) => x.slotchangeHandler(c.event)}"></slot>
+    </template>
+  `;
+}
+var template6 = listboxTemplate();
+
+// node_modules/@fluentui/web-components/dist/esm/listbox/listbox.definition.js
+var definition6 = {
+  name: tagName2,
+  registry: FluentDesignSystem.registry,
+  styles: styles7,
+  template: template6
+};
+
+// node_modules/@fluentui/web-components/dist/esm/listbox/listbox.js
+var Listbox = class extends FASTElement {
+  /**
+   * Calls the `slotchangeHandler` when the `defaultSlot` element is assigned
+   * via the `ref` directive in the template.
+   *
+   * @internal
+   */
+  defaultSlotChanged() {
+    this.slotchangeHandler();
+  }
+  /**
+   * Updates the multiple selection state of the listbox and its options.
+   *
+   * @param prev - the previous multiple value
+   * @param next - the current multiple value
+   */
+  multipleChanged(prev, next2) {
+    this.elementInternals.ariaMultiSelectable = next2 ? "true" : "false";
+    toggleState(this.elementInternals, "multiple", next2);
+    Updates.enqueue(() => {
+      this.options.forEach((x) => {
+        x.multiple = !!next2;
+      });
+    });
+  }
+  /**
+   * Updates the enabled options collection when properties on the child options change.
+   *
+   * @param prev - the previous options
+   * @param next - the current options
+   *
+   * @internal
+   */
+  optionsChanged(prev, next2) {
+    next2?.forEach((option, index) => {
+      option.elementInternals.ariaPosInSet = `${index + 1}`;
+      option.elementInternals.ariaSetSize = `${next2.length}`;
+    });
+  }
+  /**
+   * Handles the `beforetoggle` event on the listbox.
+   *
+   * @param e - the toggle event
+   * @returns true to allow the default popover behavior, undefined to prevent it
+   * @internal
+   */
+  beforetoggleHandler(e) {
+    if (!this.dropdown) {
+      return true;
+    }
+    if (this.dropdown.disabled) {
+      this.dropdown.open = false;
+      return;
+    }
+    this.dropdown.open = e.newState === "open";
+    return true;
+  }
+  /**
+   * The collection of child options that are not disabled.
+   *
+   * @internal
+   */
+  get enabledOptions() {
+    return this.options?.filter((x) => !x.disabled) ?? Array.from(this.querySelectorAll("*")).filter((o) => isDropdownOption(o) && !o.disabled) ?? [];
+  }
+  /**
+   * The collection of child options that are selected.
+   *
+   * @public
+   */
+  get selectedOptions() {
+    return this.options?.filter((x) => x.selected) ?? [];
+  }
+  /**
+   * Sets the `selected` state on a target option when clicked.
+   *
+   * @param e - The pointer event
+   * @public
+   */
+  clickHandler(e) {
+    if (this.dropdown) {
+      return true;
+    }
+    const target = e.target;
+    if (isDropdownOption(target)) {
+      this.selectOption(this.enabledOptions.indexOf(target));
+    }
+    return true;
+  }
+  constructor() {
+    super();
+    this.elementInternals = this.attachInternals();
+    this.elementInternals.role = "listbox";
+  }
+  connectedCallback() {
+    super.connectedCallback();
+    waitForConnectedDescendants(this, () => {
+      this.id = this.id || uniqueId("listbox-");
+    }, { shallow: true });
+  }
+  /**
+   * Handles observable subscriptions for the listbox.
+   *
+   * @param source - The source of the observed change
+   * @param propertyName - The name of the property that changed
+   *
+   * @internal
+   */
+  handleChange(source, propertyName) {
+    if (propertyName === "multiple") {
+      this.multiple = source.multiple;
+      return;
+    }
+  }
+  /**
+   * Selects an option by index.
+   *
+   * @param index - The index of the option to select.
+   * @public
+   */
+  selectOption(index = this.selectedIndex) {
+    let selectedIndex = this.selectedIndex;
+    if (!this.multiple) {
+      this.enabledOptions.forEach((item, i) => {
+        const shouldCheck = i === index;
+        item.selected = shouldCheck;
+        if (shouldCheck) {
+          selectedIndex = i;
+        }
+      });
+    } else {
+      const option = this.enabledOptions[index];
+      if (option) {
+        option.selected = !option.selected;
+      }
+      selectedIndex = index;
+    }
+    this.selectedIndex = selectedIndex;
+  }
+  /**
+   * Handles the `slotchange` event for the default slot.
+   * Sets the `options` property to the list of slotted options.
+   *
+   * @param e - The slotchange event
+   * @public
+   */
+  slotchangeHandler(e) {
+    waitForConnectedDescendants(this, () => {
+      if (this.defaultSlot) {
+        const options = this.defaultSlot.assignedElements().filter((option) => isDropdownOption(option));
+        this.options = options;
+      }
+    });
+  }
+};
+__decorate([
+  observable
+], Listbox.prototype, "defaultSlot", void 0);
+__decorate([
+  observable
+], Listbox.prototype, "multiple", void 0);
+__decorate([
+  observable
+], Listbox.prototype, "options", void 0);
+__decorate([
+  observable
+], Listbox.prototype, "selectedIndex", void 0);
+__decorate([
+  observable
+], Listbox.prototype, "dropdown", void 0);
+
+// node_modules/@fluentui/web-components/dist/esm/listbox/define.js
+Listbox.define(definition6);
+
+// node_modules/@fluentui/web-components/dist/esm/option/option.styles.js
+var styles8 = css`
+  ${display("inline-grid")}
+
+  :host {
+    -webkit-tap-highlight-color: transparent;
+    ${typographyBody1Styles}
+    align-items: center;
+    background-color: ${colorNeutralBackground1};
+    border-radius: ${borderRadiusMedium};
+    box-sizing: border-box;
+    color: ${colorNeutralForeground2};
+    column-gap: ${spacingHorizontalXS};
+    cursor: pointer;
+    grid-template-areas: 'indicator start content';
+    grid-template-columns: auto auto 1fr;
+    min-height: 32px;
+    padding: ${spacingHorizontalSNudge};
+    text-align: start;
+  }
+
+  .content {
+    grid-area: content;
+    line-height: 1;
+  }
+
+  ::slotted([slot='start']) {
+    grid-area: start;
+  }
+
+  :host(:hover) {
+    background-color: ${colorNeutralBackground1Hover};
+    color: ${colorNeutralForeground2Hover};
+  }
+
+  :host(:active) {
+    background-color: ${colorNeutralBackground1Pressed};
+    color: ${colorNeutralForeground2Pressed};
+  }
+
+  :host(${nativeDisabledState}) {
+    background-color: ${colorNeutralBackground1};
+    color: ${colorNeutralForegroundDisabled};
+    cursor: default;
+  }
+
+  .checkmark-16-filled {
+    fill: currentColor;
+    width: 16px;
+  }
+
+  slot[name='checked-indicator'] > *,
+  ::slotted([slot='checked-indicator']) {
+    aspect-ratio: 1;
+    flex: 0 0 auto;
+    grid-area: indicator;
+    visibility: hidden;
+  }
+
+  :host(${selectedState}) :is(slot[name='checked-indicator'] > *, ::slotted([slot='checked-indicator'])) {
+    visibility: visible;
+  }
+
+  :host(${multipleState}) .checkmark-16-filled,
+  :host(:not(${multipleState})) .checkmark-12-regular {
+    display: none;
+  }
+
+  :host(${multipleState}) .checkmark-12-regular {
+    background-color: ${colorNeutralBackground1};
+    border-radius: ${borderRadiusSmall};
+    border: ${strokeWidthThin} solid ${colorNeutralStrokeAccessible};
+    box-sizing: border-box;
+    cursor: pointer;
+    fill: transparent;
+    position: relative;
+    visibility: visible;
+    width: 16px;
+  }
+
+  :host(${multipleState}${selectedState}) .checkmark-12-regular {
+    background-color: ${colorCompoundBrandBackground};
+    border-color: ${colorCompoundBrandStroke};
+    fill: ${colorNeutralForegroundInverted};
+  }
+
+  :host(${nativeDisabledState}${multipleState}) .checkmark-12-regular {
+    border-color: ${colorNeutralStrokeDisabled};
+  }
+
+  :host(${nativeDisabledState}${multipleState}${selectedState}) .checkmark-12-regular {
+    background-color: ${colorNeutralBackgroundDisabled};
+  }
+
+  :host(${activeState}) {
+    border: ${strokeWidthThick} solid ${colorStrokeFocus2};
+  }
+
+  @supports (selector(:host(:has(*)))) {
+    :host(:has([slot='start']:not([size='16']))) {
+      column-gap: ${spacingHorizontalSNudge};
+    }
+  }
+
+  :host(${descriptionState}) {
+    column-gap: ${spacingHorizontalSNudge};
+    grid-template-areas:
+      'indicator start content'
+      'indicator start description';
+  }
+
+  ::slotted([slot='description']) {
+    color: ${colorNeutralForeground3};
+    grid-area: description;
+    ${typographyCaption1Styles}
+  }
+
+  @media (forced-colors: active) {
+    :host(${nativeDisabledState}) {
+      color: GrayText;
+    }
+  }
+`;
+
+// node_modules/@fluentui/web-components/dist/esm/option/option.template.js
+var checkedIndicator = html.partial(
+  /* html */
+  `
+  <svg aria-hidden="true" class="checkmark-16-filled" viewBox="0 0 16 16">
+    <path
+      d="M14.046 3.486a.75.75 0 0 1-.032 1.06l-7.93 7.474a.85.85 0 0 1-1.188-.022l-2.68-2.72a.75.75 0 1 1 1.068-1.053l2.234 2.267l7.468-7.038a.75.75 0 0 1 1.06.032"
+    />
+  </svg>
+  <svg aria-hidden="true" class="checkmark-12-regular" viewBox="0 0 12 12">
+    <path
+      d="M9.854 3.146a.5.5 0 0 1 0 .708l-4.5 4.5a.5.5 0 0 1-.708 0l-2-2a.5.5 0 1 1 .708-.708L5 7.293l4.146-4.147a.5.5 0 0 1 .708 0"
+    />
+  </svg>
+`
+);
+function dropdownOptionTemplate(options = {}) {
+  return html`
+    <slot name="checked-indicator">${staticallyCompose(options.checkedIndicator)}</slot>
+    ${startSlotTemplate(options)}
+    <div class="content" part="content">
+      <slot ${slotted({ property: "freeformOutputs", filter: elements("output") })}></slot>
+    </div>
+    <div class="description" part="description">
+      <slot name="description" ${slotted("descriptionSlot")}></slot>
+    </div>
+  `;
+}
+var template7 = dropdownOptionTemplate({
+  checkedIndicator
+});
+
+// node_modules/@fluentui/web-components/dist/esm/option/option.definition.js
+var definition7 = {
+  name: tagName3,
+  registry: FluentDesignSystem.registry,
+  styles: styles8,
+  template: template7
+};
+
+// node_modules/@fluentui/web-components/dist/esm/option/option.js
+var DropdownOption = class extends FASTElement {
+  /**
+   * Changes the active state of the option when the active property changes.
+   *
+   * @param prev - the previous active state
+   * @param next - the current active state
+   * @internal
+   */
+  activeChanged(prev, next2) {
+    toggleState(this.elementInternals, "active", next2);
+  }
+  /**
+   * Sets the selected property to match the currentSelected state.
+   *
+   * @param prev - the previous selected state
+   * @param next - the current selected state
+   * @internal
+   */
+  currentSelectedChanged(prev, next2) {
+    this.selected = !!next2;
+  }
+  /**
+   * Updates the selected state when the `selected` attribute is changed, unless the selected state has been changed by the user.
+   *
+   * @param prev - The previous initial selected state
+   * @param next - The current initial selected state
+   * @internal
+   */
+  defaultSelectedChanged(prev, next2) {
+    this.selected = !!next2;
+  }
+  /**
+   * Changes the description state of the option when the description slot changes.
+   *
+   * @param prev - the previous collection of description elements
+   * @param next - the current collection of description elements
+   * @internal
+   */
+  descriptionSlotChanged(prev, next2) {
+    toggleState(this.elementInternals, "description", !!next2?.length);
+  }
+  /**
+   * Toggles the disabled state when the user changes the `disabled` property.
+   *
+   * @internal
+   */
+  disabledChanged(prev, next2) {
+    this.elementInternals.ariaDisabled = this.disabled ? "true" : "false";
+    toggleState(this.elementInternals, "disabled", this.disabled);
+    this.setFormValue(!this.disabled && this.selected ? this.value : null);
+  }
+  /**
+   * Sets the disabled state when the `disabled` attribute changes.
+   *
+   * @param prev - the previous value
+   * @param next - the current value
+   * @internal
+   */
+  disabledAttributeChanged(prev, next2) {
+    this.disabled = !!next2;
+  }
+  /**
+   * Sets the value of the option when the `value` attribute changes.
+   *
+   * @param prev - The previous initial value
+   * @param next - The current initial value
+   * @internal
+   */
+  initialValueChanged(prev, next2) {
+    this._value = next2;
+  }
+  /**
+   * Updates the multiple state of the option when the multiple property changes.
+   *
+   * @param prev - the previous multiple state
+   * @param next - the current multiple state
+   */
+  multipleChanged(prev, next2) {
+    toggleState(this.elementInternals, "multiple", next2);
+    this.selected = false;
+  }
+  /**
+   * The associated `<form>` element.
+   *
+   * @public
+   * @remarks
+   * Reflects the {@link https://developer.mozilla.org/docs/Web/API/ElementInternals/form | `ElementInternals.form`} property.
+   */
+  get form() {
+    return this.elementInternals.form;
+  }
+  static {
+    this.formAssociated = true;
+  }
+  /**
+   * A reference to all associated `<label>` elements.
+   *
+   * @public
+   */
+  get labels() {
+    return Object.freeze(Array.from(this.elementInternals.labels));
+  }
+  /**
+   * The option's current selected state.
+   *
+   * @public
+   */
+  get selected() {
+    Observable.track(this, "selected");
+    return !!this.currentSelected;
+  }
+  set selected(next2) {
+    this.currentSelected = next2;
+    Updates.enqueue(() => {
+      if (this.elementInternals) {
+        this.setFormValue(next2 ? this.value : null);
+        this.elementInternals.ariaSelected = next2 ? "true" : "false";
+        toggleState(this.elementInternals, "selected", next2);
+      }
+    });
+    Observable.notify(this, "selected");
+  }
+  /**
+   * The display text of the option.
+   *
+   * @public
+   * @remarks
+   * When the option is freeform, the text is the value of the option.
+   */
+  get text() {
+    if (this.freeform) {
+      return this.value.replace(/\s+/g, " ").trim();
+    }
+    return (this.textAttribute ?? this.textContent)?.replace(/\s+/g, " ").trim() ?? "";
+  }
+  /**
+   * The current value of the option.
+   *
+   * @public
+   */
+  get value() {
+    Observable.track(this, "value");
+    return this._value ?? this.text;
+  }
+  set value(value) {
+    this._value = value;
+    if (this.$fastController.isConnected) {
+      this.setFormValue(this.selected ? value : null);
+      this.freeformOutputs?.forEach((output) => {
+        output.value = value;
+      });
+      Observable.notify(this, "value");
+    }
+  }
+  connectedCallback() {
+    super.connectedCallback();
+    if (this.freeform) {
+      this.value = "";
+      this.hidden = true;
+      this.selected = false;
+    }
+  }
+  constructor() {
+    super();
+    this.active = false;
+    this.id = uniqueId("option-");
+    this.initialValue = "";
+    this.multiple = false;
+    this.elementInternals = this.attachInternals();
+    this._value = this.initialValue;
+    this.elementInternals.role = "option";
+  }
+  /**
+   * Reflects the {@link https://developer.mozilla.org/docs/Web/API/ElementInternals/setFormValue | `ElementInternals.setFormValue()`} method.
+   *
+   * @internal
+   */
+  setFormValue(value, state) {
+    if (this.disabled) {
+      this.elementInternals.setFormValue(null);
+      return;
+    }
+    this.elementInternals.setFormValue(value, value ?? state);
+  }
+  /**
+   * Toggles the selected state of the control.
+   *
+   * @param force - Forces the element to be checked or unchecked
+   * @public
+   */
+  toggleSelected(force = !this.selected) {
+    this.selected = force;
+  }
+};
+__decorate([
+  observable
+], DropdownOption.prototype, "active", void 0);
+__decorate([
+  attr({ attribute: "current-selected", mode: "boolean" })
+], DropdownOption.prototype, "currentSelected", void 0);
+__decorate([
+  attr({ attribute: "selected", mode: "boolean" })
+], DropdownOption.prototype, "defaultSelected", void 0);
+__decorate([
+  observable
+], DropdownOption.prototype, "descriptionSlot", void 0);
+__decorate([
+  observable
+], DropdownOption.prototype, "disabled", void 0);
+__decorate([
+  attr({ attribute: "disabled", mode: "boolean" })
+], DropdownOption.prototype, "disabledAttribute", void 0);
+__decorate([
+  attr({ attribute: "form" })
+], DropdownOption.prototype, "formAttribute", void 0);
+__decorate([
+  attr({ mode: "boolean" })
+], DropdownOption.prototype, "freeform", void 0);
+__decorate([
+  attr({ attribute: "id" })
+], DropdownOption.prototype, "id", void 0);
+__decorate([
+  attr({ attribute: "value", mode: "fromView" })
+], DropdownOption.prototype, "initialValue", void 0);
+__decorate([
+  observable
+], DropdownOption.prototype, "multiple", void 0);
+__decorate([
+  attr
+], DropdownOption.prototype, "name", void 0);
+__decorate([
+  observable
+], DropdownOption.prototype, "start", void 0);
+__decorate([
+  attr({ attribute: "text", mode: "fromView" })
+], DropdownOption.prototype, "textAttribute", void 0);
+
+// node_modules/@fluentui/web-components/dist/esm/option/define.js
+DropdownOption.define(definition7);
+
+// node_modules/@fluentui/web-components/dist/esm/switch/switch.options.js
+var tagName8 = `${FluentDesignSystem.prefix}-switch`;
+
+// node_modules/@fluentui/web-components/dist/esm/switch/switch.styles.js
+var styles9 = css`
+  ${display("inline-flex")}
+
+  :host {
+    box-sizing: border-box;
+    align-items: center;
+    flex-direction: row;
+    outline: none;
+    user-select: none;
+    contain: content;
+    padding: 0 ${spacingHorizontalXXS};
+    width: 40px;
+    height: 20px;
+    background-color: ${colorTransparentBackground};
+    border: 1px solid ${colorNeutralStrokeAccessible};
+    border-radius: ${borderRadiusCircular};
+  }
+
+  :host(:enabled) {
+    cursor: pointer;
+  }
+
+  :host(:hover) {
+    background: none;
+    border-color: ${colorNeutralStrokeAccessibleHover};
+  }
+  :host(:active) {
+    border-color: ${colorNeutralStrokeAccessiblePressed};
+  }
+  :host(${nativeDisabledState}),
+  :host([readonly]) {
+    border: 1px solid ${colorNeutralStrokeDisabled};
+    background-color: none;
+    pointer: default;
+  }
+  :host(${checkedState}) {
+    background: ${colorCompoundBrandBackground};
+    border-color: ${colorCompoundBrandBackground};
+  }
+  :host(${checkedState}:hover) {
+    background: ${colorCompoundBrandBackgroundHover};
+    border-color: ${colorCompoundBrandBackgroundHover};
+  }
+  :host(${checkedState}:active) {
+    background: ${colorCompoundBrandBackgroundPressed};
+    border-color: ${colorCompoundBrandBackgroundPressed};
+  }
+  :host(${checkedState}${nativeDisabledState}) {
+    background: ${colorNeutralBackgroundDisabled};
+    border-color: ${colorNeutralStrokeDisabled};
+  }
+  .checked-indicator {
+    height: 14px;
+    width: 14px;
+    border-radius: 50%;
+    margin-inline-start: 0;
+    background-color: ${colorNeutralForeground3};
+    transition-duration: ${durationNormal};
+    transition-timing-function: ${curveEasyEase};
+    transition-property: margin-inline-start;
+  }
+  :host(${checkedState}) .checked-indicator {
+    background-color: ${colorNeutralForegroundInverted};
+    margin-inline-start: calc(100% - 14px);
+  }
+  :host(${checkedState}:hover) .checked-indicator {
+    background: ${colorNeutralForegroundInvertedHover};
+  }
+  :host(${checkedState}:active) .checked-indicator {
+    background: ${colorNeutralForegroundInvertedPressed};
+  }
+  :host(:hover) .checked-indicator {
+    background-color: ${colorNeutralForeground3Hover};
+  }
+  :host(:active) .checked-indicator {
+    background-color: ${colorNeutralForeground3Pressed};
+  }
+  :host(${nativeDisabledState}) .checked-indicator,
+  :host([readonly]) .checked-indicator {
+    background: ${colorNeutralForegroundDisabled};
+  }
+  :host(${checkedState}${nativeDisabledState}) .checked-indicator {
+    background: ${colorNeutralForegroundDisabled};
+  }
+
+  :host(:focus-visible) {
+    outline: none;
+  }
+
+  :host(:not([slot='input']):focus-visible) {
+    border-color: ${colorTransparentStroke};
+    outline: ${strokeWidthThick} solid ${colorTransparentStroke};
+    outline-offset: 1px;
+    box-shadow: ${shadow4}, 0 0 0 2px ${colorStrokeFocus2};
+  }
+
+  @media (forced-colors: active) {
+    :host {
+      border-color: InactiveBorder;
+    }
+    :host(${checkedState}),
+    :host(${checkedState}:active),
+    :host(${checkedState}:hover) {
+      background: Highlight;
+      border-color: Highlight;
+    }
+    .checked-indicator,
+    :host(:hover) .checked-indicator,
+    :host(:active) .checked-indicator {
+      background-color: ActiveCaption;
+    }
+    :host(${checkedState}) .checked-indicator,
+    :host(${checkedState}:hover) .checked-indicator,
+    :host(${checkedState}:active) .checked-indicator {
+      background-color: ButtonFace;
+    }
+    :host(${nativeDisabledState}) .checked-indicator,
+    :host(${checkedState}${nativeDisabledState}) .checked-indicator {
+      background-color: GrayText;
+    }
+  }
+`;
+
+// node_modules/@fluentui/web-components/dist/esm/switch/switch.template.js
+function switchTemplate(options = {}) {
+  return html`
+    <template
+      @click="${(x, c) => x.clickHandler(c.event)}"
+      @input="${(x, c) => x.inputHandler(c.event)}"
+      @keydown="${(x, c) => x.keydownHandler(c.event)}"
+      @keyup="${(x, c) => x.keyupHandler(c.event)}"
+    >
+      <slot name="switch">${staticallyCompose(options.switch)}</slot>
+    </template>
+  `;
+}
+var template8 = switchTemplate({
+  switch: `<span class="checked-indicator" part="checked-indicator"></span>`
+});
+
+// node_modules/@fluentui/web-components/dist/esm/switch/switch.definition.js
+var definition8 = {
+  name: tagName8,
+  registry: FluentDesignSystem.registry,
+  styles: styles9,
+  template: template8
+};
+
+// node_modules/@fluentui/web-components/dist/esm/switch/define.js
+Switch.define(definition8);
+
 // src/Browser.FluentUIWebComponents/web/fluent.ts
 async function initializeFluent() {
   await customElements.whenDefined("fluent-button");
   await customElements.whenDefined("fluent-text");
   await customElements.whenDefined("fluent-text-input");
   await customElements.whenDefined("fluent-image");
+  await customElements.whenDefined("fluent-dropdown");
+  await customElements.whenDefined("fluent-listbox");
+  await customElements.whenDefined("fluent-option");
+  await customElements.whenDefined("fluent-switch");
   await document.fonts.ready;
   Updates.process();
 }
